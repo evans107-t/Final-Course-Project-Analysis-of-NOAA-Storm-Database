@@ -4,3 +4,5 @@
 .Ruserdata
 data/*.csv
 FinalAnalysis_cache/
+rsconnect/
+.DS_Store
