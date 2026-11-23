@@ -57,3 +57,10 @@ The full session information is at the end of the published report.
 4. Open `FinalAnalysis.Rmd` and click **Knit**.
 
 All file paths are relative to the project folder, so the report runs on any computer with the project files.
+
+## Key findings
+
+- **Health impact:** Heat caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries.
+- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC), with regional exceptions such as Hail in Texas and Heat in Oklahoma.
+- **By month:** Winter events peaked in January, Hail and Thunderstorm Wind in May, Heat in July, and Flash Floods in August.
+- **Economic damage:** Hurricanes caused about $6.8 billion in damage from only 76 events, more than twice any other event type.

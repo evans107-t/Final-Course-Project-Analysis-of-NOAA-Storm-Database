@@ -419,6 +419,46 @@ knit, even when the data chunk below is read from the cache.</p>
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(readr)</code></pre>
+</div>
+<div id="downloading-the-raw-data" class="section level3">
+<h3>Downloading the raw data</h3>
+<p>If the raw files are not already in the <code>data</code> folder,
+this chunk downloads them from NOAA. The files are also included in the
+repository, because NOAA replaces older file versions when it publishes
+updates, and the download links may stop working.</p>
+<p><strong>Code explanation:</strong></p>
+<ol style="list-style-type: decimal">
+<li>1st to 3rd lines: <code>file.exists()</code> checks whether the
+<code>data</code> folder exists, and <code>dir.create()</code> creates
+it if it is missing.</li>
+<li>4th line: <code>noaa_url</code> stores the address of NOAA’s bulk
+CSV folder.</li>
+<li>5th to 7th lines: <code>c()</code> stores the three file names in
+<code>file_names</code>.</li>
+<li>8th line: the <code>for</code> loop repeats the steps inside
+<code>{ }</code> once for each file name.</li>
+<li>9th line: <code>!file.exists()</code> is TRUE when the file is not
+already in the <code>data</code> folder, so the download only runs for
+missing files.</li>
+<li>10th and 11th lines: <code>download.file()</code> downloads the
+file. <code>paste(..., sep = &quot;&quot;)</code> joins the folder address and the
+file name into the full link, <code>destfile</code> sets where the file
+is saved, and <code>mode = &quot;wb&quot;</code> saves it as a binary file, which
+compressed <code>.gz</code> files need.</li>
+</ol>
+<pre class="r"><code>if (!file.exists(&quot;data&quot;)) {
+  dir.create(&quot;data&quot;)
+}
+noaa_url &lt;- &quot;https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/&quot;
+file_names &lt;- c(&quot;StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz&quot;,
+                &quot;StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz&quot;,
+                &quot;StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz&quot;)
+for (f in file_names) {
+  if (!file.exists(paste(&quot;data/&quot;, f, sep = &quot;&quot;))) {
+    download.file(paste(noaa_url, f, sep = &quot;&quot;),
+                  destfile = paste(&quot;data/&quot;, f, sep = &quot;&quot;), mode = &quot;wb&quot;)
+  }
+}</code></pre>
 <p><strong>Code explanation:</strong></p>
 <ol style="list-style-type: decimal">
 <li>1st line: <code>read_csv()</code> reads the raw details file, which

@@ -63,7 +63,7 @@ for (f in file_names) {
 1. 1st line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
 2. 2nd line: reads the raw fatalities file, which has one row per person who died.
 3. 3rd line: reads the raw locations file, which has one row per point along an event's path.
-4. 4th to 6th lines: the pipe `%>%` passes data from one step to the next. `left_join()` merges two datasets based on a common key, here `EVENT_ID`. It keeps all rows from the left dataset (`details`) and brings in the matching rows from the right dataset (`locations`, then `fatalities`). Events with no match get `NA` in the new columns.
+4. 4th to 6th lines: the pipe `%>%` passes data from one step to the next. `left_join()` merges two data sets based on a common key, here `EVENT_ID`. It keeps all rows from the left data set (`details`) and brings in the matching rows from the right data set (`locations`, then `fatalities`). Events with no match get `NA` in the new columns.
 5. 7th line: `write_csv()` saves the joined data as `StormEvents_joined_data.csv` in the `data` folder.
 
 The file paths start at the `data` folder inside the project, not at a folder on one specific computer, so the analysis runs on any machine that has the project folder. `cache = TRUE` saves this chunk's result after the first knit, so later knits skip reloading the large details file.
@@ -86,10 +86,10 @@ One event can have several location rows and several fatality rows. When we join
 
 **Code explanation:**
 
-1. 1st to 6th lines: `data.frame()` creates a small comparison table directly from named vectors, with one row for each dataset.
-2. 2nd line: `dataset` names the two datasets being compared.
-3. 3rd line: `nrow()` returns the number of rows in each dataset.
-4. 4th and 5th lines: `sum()` adds up `DEATHS_DIRECT` in each dataset. `na.rm = TRUE` tells `sum()` to ignore missing values.
+1. 1st to 6th lines: `data.frame()` creates a small comparison table directly from named vectors, with one row for each data set.
+2. 2nd line: `dataset` names the two data sets being compared.
+3. 3rd line: `nrow()` returns the number of rows in each data set.
+4. 4th and 5th lines: `sum()` adds up `DEATHS_DIRECT` in each data set. `na.rm = TRUE` tells `sum()` to ignore missing values.
 
 ```{r join-check}
 data.frame(
@@ -177,11 +177,11 @@ details <- details %>%
 
 ### Keeping only the 50 states and DC
 
-The `STATE` column includes 4 U.S. territories and 13 bodies of water (such as the Gulf of Mexico and the Great Lakes) along with the 50 states and DC. Question 2 asks about states, so we made a separate dataset without those 17 areas. The full `details` table stays unchanged for the other questions.
+The `STATE` column includes 4 U.S. territories and 13 bodies of water (such as the Gulf of Mexico and the Great Lakes) along with the 50 states and DC. Question 2 asks about states, so we made a separate data set without those 17 areas. The full `details` table stays unchanged for the other questions.
 
 **Code explanation:**
 
-1. 1st line: `details_states <-` saves the result as a new dataset, so `details` itself stays unchanged.
+1. 1st line: `details_states <-` saves the result as a new data set, so `details` itself stays unchanged.
 2. 2nd line: `filter()` picks the rows that meet a condition. `%in%` checks whether each `STATE` value appears in a list. The `!` flips TRUE and FALSE, so `filter()` keeps the rows that are *not* in the list.
 3. 2nd to 6th lines: the list of the 4 territories and 13 bodies of water to remove.
 
@@ -410,6 +410,10 @@ barplot(top10_damage$total_millions,
 **Figure 4.** Combined property and crop damage, in millions of dollars, for the 10 most damaging storm event types in the United States in 2024. Totals include only events with a reported damage estimate. Hurricanes caused about $6.8 billion in damage from 76 events, more than twice the damage of any other event type. Hurricanes are highlighted in gold.
 
 **Answer:** Hurricanes caused the most economic damage in 2024 (about $6.8 billion), followed by Flash Floods (about $3.2 billion), Tropical Storms (about $2.2 billion), and Tornadoes (about $1.7 billion). The most damaging events are mostly not the most harmful to health. Heat caused the most deaths and injuries but does not appear in the top 10 for damage. Flash Flood and Tornado are the only event types in the top four for both health harm and economic damage.
+
+## Limitations
+
+This analysis covers 2024 only, so the rankings and seasonal patterns may differ in other years. Damage totals count only events with a reported estimate, and 15,046 events have no property damage estimate, so the true costs are likely higher. Question 2 counts how often each event type occurred, not how much harm it caused, so a state's most common event type is not necessarily its most dangerous one. NOAA continues to revise its records after publication, and these results reflect the version of the files created on November 19, 2026.
 
 ## Session Information
 
