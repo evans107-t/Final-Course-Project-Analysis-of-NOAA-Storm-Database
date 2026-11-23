@@ -6,3 +6,4 @@ data/*.csv
 FinalAnalysis_cache/
 rsconnect/
 .DS_Store
+FinalAnalysis_files/

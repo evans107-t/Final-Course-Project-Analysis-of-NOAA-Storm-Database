@@ -29,6 +29,35 @@ library(dplyr)
 library(readr)
 ```
 
+### Downloading the raw data
+
+If the raw files are not already in the `data` folder, this chunk downloads them from NOAA. The files are also included in the repository, because NOAA replaces older file versions when it publishes updates, and the download links may stop working.
+
+**Code explanation:**
+
+1. 1st to 3rd lines: `file.exists()` checks whether the `data` folder exists, and `dir.create()` creates it if it is missing.
+2. 4th line: `noaa_url` stores the address of NOAA's bulk CSV folder.
+3. 5th to 7th lines: `c()` stores the three file names in `file_names`.
+4. 8th line: the `for` loop repeats the steps inside `{ }` once for each file name.
+5. 9th line: `!file.exists()` is TRUE when the file is not already in the `data` folder, so the download only runs for missing files.
+6. 10th and 11th lines: `download.file()` downloads the file. `paste(..., sep = "")` joins the folder address and the file name into the full link, `destfile` sets where the file is saved, and `mode = "wb"` saves it as a binary file, which compressed `.gz` files need.
+
+```{r download-data}
+if (!file.exists("data")) {
+  dir.create("data")
+}
+noaa_url <- "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/"
+file_names <- c("StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz",
+                "StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz",
+                "StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz")
+for (f in file_names) {
+  if (!file.exists(paste("data/", f, sep = ""))) {
+    download.file(paste(noaa_url, f, sep = ""),
+                  destfile = paste("data/", f, sep = ""), mode = "wb")
+  }
+}
+```
+
 **Code explanation:**
 
 1. 1st line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
