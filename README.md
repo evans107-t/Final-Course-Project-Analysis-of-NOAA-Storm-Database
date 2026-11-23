@@ -36,6 +36,7 @@ Files downloaded on November 23, 2026.
 | `FinalAnalysis.R` | R script with all code from the report |
 | `data/` | Raw NOAA data files for 2024 |
 | `README.md` | This file |
+| `CodeBook.md` | Study design, processing steps, and variable definitions |
 
 ## Software
 
