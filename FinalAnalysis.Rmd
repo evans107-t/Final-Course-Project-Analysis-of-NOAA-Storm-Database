@@ -192,25 +192,29 @@ head(health_by_type, 10)
 
 **Code explanation:**
 
-1. 1st line: `head(health_by_type, 10)` keeps the 10 most harmful event types and saves them as `top10`.
-2. 2nd line: `par(mar = c(10, 4, 3, 1))` sets the margins around the plot (bottom, left, top, right). The bottom margin is large so the sideways event names fit.
-3. 3rd line: `barplot()` draws one bar per event type, with the bar height set by `health_total`.
-4. 4th line: `names.arg` puts the event type names under each bar.
-5. 5th line: `las = 2` rotates the labels so they're easier to read.
-6. 6th to 8th lines: `col` sets the bar color, `main` adds the title, and `ylab` labels the y-axis.
+1. Chunk options: `fig.width = 9, fig.height = 6` make the figure wider and taller than the default so the bars and labels have room.
+2. 1st line: `head(health_by_type, 10)` keeps the 10 most harmful event types and saves them as `top10`.
+3. 2nd line: `par(mar = c(10, 4, 3, 1))` sets the margins around the plot (bottom, left, top, right). The bottom margin is large so the sideways event names fit.
+4. 3rd line: `barplot()` draws one bar per event type, with the bar height set by `health_total`.
+5. 4th line: `names.arg` puts the event type names under each bar.
+6. 5th line: `ylim = c(0, 800)` sets the y-axis to run from 0 to 800, so the tallest bar (Heat, 745) has room below the top of the axis.
+7. 6th line: `las = 2` rotates the labels so they're easier to read.
+8. 7th line: `col` sets one color per bar. `c()` lists the colors in bar order: `"firebrick"` for the first bar (Heat), `"steelblue"` for the second (Tornado), and `rep("gray80", 8)` repeats light gray for the other eight bars.
+9. 8th and 9th lines: `main` adds the title, and `ylab` labels the y-axis.
 
-```{r q1-plot}
+```{r q1-plot, fig.width=9, fig.height=6}
 top10 <- head(health_by_type, 10)
 par(mar = c(10, 4, 3, 1))
 barplot(top10$health_total,
         names.arg = top10$EVENT_TYPE,
+        ylim = c(0, 800),
         las = 2,
-        col = "steelblue",
+        col = c("firebrick", "steelblue", rep("gray80", 8)),
         main = "Top 10 Storm Event Types by Deaths and Injuries, U.S. 2024",
         ylab = "Total deaths and injuries")
 ```
 
-**Figure 1.** Total deaths and injuries (direct and indirect) for the 10 most harmful storm event types in the United States in 2024. Heat (including Excessive Heat) caused the most combined harm, followed closely by tornadoes.
+**Figure 1.** Total deaths and injuries (direct and indirect) for the 10 most harmful storm event types in the United States in 2024. Heat (including Excessive Heat) caused the most combined harm, followed closely by tornadoes. Heat is highlighted in red and tornadoes in blue.
 
 **Answer:** Heat (including Excessive Heat) was the most harmful event type in 2024, with 745 deaths and injuries, followed closely by tornadoes with 711. Heat caused far more deaths (472 vs. 53), while tornadoes caused mostly injuries.
 
@@ -246,19 +250,21 @@ top_type_by_state
 
 1. 1st line: `as.character()` coerces `EVENT_TYPE` from a factor to character (text). Without this step, `table()` would also list the event types that aren't the top type in any state, each with a count of 0. `table()` counts how many states have each event type as their most common. `sort(..., decreasing = TRUE)` orders those counts from highest to lowest.
 2. 2nd line: `par(mar = c(9, 4, 3, 1))` makes the bottom margin large enough for the sideways labels.
-3. 3rd to 7th lines: `barplot()` draws one bar per event type. `las = 2` rotates the labels, `col` sets the color, `main` adds the title, and `ylab` labels the y-axis.
+3. 3rd to 8th lines: `barplot()` draws one bar per event type. `ylim = c(0, 40)` sets the y-axis to run from 0 to 40, so the tallest bar (Thunderstorm Wind, 36) has room below the top of the axis. `las = 2` rotates the labels, `col` sets one color per bar (`"darkorange"` for the first bar, Thunderstorm Wind, and `rep("gray80", 8)` for the other eight, combined with `c()`), `main` adds the title, and `ylab` labels the y-axis.
+4. Chunk options: `fig.width = 9, fig.height = 6` make the figure wider and taller than the default so the bars and labels have room.
 
-```{r q2-plot}
+```{r q2-plot, fig.width=9, fig.height=6}
 top_type_counts <- sort(table(as.character(top_type_by_state$EVENT_TYPE)), decreasing = TRUE)
 par(mar = c(9, 4, 3, 1))
 barplot(top_type_counts,
+        ylim = c(0, 40),
         las = 2,
-        col = "darkorange",
+        col = c("darkorange", rep("gray80", 8)),
         main = "Most Common Storm Event Type in Each State, U.S. 2024",
         ylab = "Number of states (including DC)")
 ```
 
-**Figure 2.** Number of states (50 states plus DC) where each event type was the most frequently recorded storm event in 2024. Thunderstorm Wind was the most common event in 36 of 51 places, while the remaining 15 were led by regional events such as High Wind in the West and Heavy Snow in the Pacific Northwest and Colorado.
+**Figure 2.** Number of states (50 states plus DC) where each event type was the most frequently recorded storm event in 2024. Thunderstorm Wind was the most common event in 36 of 51 places, while the remaining 15 were led by regional events such as High Wind in the West and Heavy Snow in the Pacific Northwest and Colorado. Thunderstorm Wind is highlighted in orange.
 
 **Answer:** Thunderstorm Wind was the most common event type in 36 of the 51 places. Texas was led by Hail and Oklahoma by Heat, and the remaining exceptions followed regional patterns, such as High Wind in the West, Heavy Snow in Colorado, Washington, and Oregon, Blizzard in Alaska, and High Surf in Hawaii.
 
@@ -295,26 +301,27 @@ peak_month_by_type
 
 **Code explanation:**
 
-1. Chunk options: `fig.width = 12, fig.height = 6` make the figure wider and taller than the default so all 10 panels fit.
-2. 1st line: `par(mfrow = c(2, 5))` splits the figure into 2 rows and 5 columns, one spot per event type. `mar` sets smaller margins so each panel has more room.
+1. Chunk options: `fig.width = 10, fig.height = 14` make the figure wide enough for every month label and tall enough for 5 rows of panels.
+2. 1st line: `par(mfrow = c(5, 2))` splits the figure into 5 rows and 2 columns, one spot per event type. `mar` sets smaller margins so each panel has more room.
 3. 2nd line: the `for` loop repeats the steps inside `{ }` once for each event type in `top10_types`. Each time through, `type` holds the current event type.
 4. 3rd line: `top_types_data$EVENT_TYPE == type` gives TRUE for rows of the current type. Putting that inside `[ ]` keeps only those rows' months, saved as `type_months`.
 5. 4th line: `table(type_months)` counts the events in each month. Since `MONTH_NAME` is a factor, months with zero events still show up, in calendar order. `barplot()` draws those 12 counts.
 6. 5th line: `names.arg` labels the bars with each month's first letter so the labels fit.
-7. 6th and 7th lines: `col` sets the bar color, and `main = type` titles each panel with its event type.
+7. 6th line: `ifelse()` takes three arguments: a logical test (`table(type_months) == max(table(type_months))`), which is TRUE for the month with the most events, the color to use when TRUE (`"seagreen"`), and the color to use when FALSE (`"gray80"`). This highlights each panel's peak month.
+8. 7th line: `main = type` titles each panel with its event type.
 
-```{r q3-plot, fig.width=12, fig.height=6}
-par(mfrow = c(2, 5), mar = c(3, 3, 3, 1))
+```{r q3-plot, fig.width=10, fig.height=14}
+par(mfrow = c(5, 2), mar = c(3, 3, 3, 1))
 for (type in top10_types) {
   type_months <- top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == type]
   barplot(table(type_months),
           names.arg = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"),
-          col = "seagreen",
+          col = ifelse(table(type_months) == max(table(type_months)), "seagreen", "gray80"),
           main = type)
 }
 ```
 
-**Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024. Each panel has its own y-axis scale, so compare the shape of each pattern, not the bar heights across panels. Winter Weather and Heavy Snow cluster in the cold months, Heat is almost entirely limited to May through September, and Flood and Drought spread across the whole year.
+**Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024. Each panel has its own y-axis scale, so compare the shape of each pattern, not the bar heights across panels. Winter Weather and Heavy Snow cluster in the cold months, Heat is almost entirely limited to May through September, and Flood and Drought spread across the whole year. The peak month for each event type is highlighted in green.
 
 **Answer:** Storm event types follow strong seasonal patterns. Winter Weather, Heavy Snow, and High Wind peak in January, Hail and Thunderstorm Wind peak in May, Heat peaks in July, Flash Flood and Marine Thunderstorm Wind peak in August, and Drought peaks in November. Some types are tightly tied to one season, while others, like Flood, happen throughout the year.
 
@@ -342,8 +349,8 @@ damage_by_type <- details %>%
   mutate(property_millions = round(property_millions, digits = 1),
          crop_millions     = round(crop_millions, digits = 1),
          total_millions    = round(total_millions, digits = 1)) %>%
-    arrange(desc(total_millions)) %>%
-    as.data.frame()
+  arrange(desc(total_millions)) %>%
+  as.data.frame()
 
 head(damage_by_type, 10)
 ```
@@ -354,21 +361,24 @@ head(damage_by_type, 10)
 2. 2nd line: `par(mar = c(10, 5, 3, 1))` sets the margins. The large bottom margin fits the sideways event names, and the wider left margin fits the larger y-axis numbers.
 3. 3rd line: `barplot()` draws one bar per event type, with the bar height set by `total_millions`.
 4. 4th line: `names.arg` puts the event type names under each bar.
-5. 5th line: `las = 2` rotates the labels so they're easier to read.
-6. 6th to 8th lines: `col` sets the bar color, `main` adds the title, and `ylab` labels the y-axis.
+5. 5th line: `ylim = c(0, 7000)` sets the y-axis to run from 0 to 7,000, so the tallest bar (Hurricane, about 6,813) has room below the top of the axis.
+6. 6th line: `las = 2` rotates the labels so they're easier to read.
+7. 7th line: `col` sets one color per bar. `c()` lists the colors in bar order: `"darkgoldenrod"` for the first bar (Hurricane), and `rep("gray80", 9)` repeats light gray for the other nine bars.
+8. 8th and 9th lines: `main` adds the title, and `ylab` labels the y-axis.
 
-```{r q4-plot}
+```{r q4-plot, fig.width=9, fig.height=6}
 top10_damage <- head(damage_by_type, 10)
 par(mar = c(10, 5, 3, 1))
 barplot(top10_damage$total_millions,
         names.arg = top10_damage$EVENT_TYPE,
+        ylim = c(0, 7000),
         las = 2,
-        col = "firebrick",
+        col = c("darkgoldenrod", rep("gray80", 9)),
         main = "Top 10 Storm Event Types by Damage, U.S. 2024",
         ylab = "Total damage (millions of dollars)")
 ```
 
-**Figure 4.** Combined property and crop damage, in millions of dollars, for the 10 most damaging storm event types in the United States in 2024. Totals include only events with a reported damage estimate. Hurricanes caused about $6.8 billion in damage from 76 events, more than twice the damage of any other event type.
+**Figure 4.** Combined property and crop damage, in millions of dollars, for the 10 most damaging storm event types in the United States in 2024. Totals include only events with a reported damage estimate. Hurricanes caused about $6.8 billion in damage from 76 events, more than twice the damage of any other event type. Hurricanes are highlighted in gold.
 
 **Answer:** Hurricanes caused the most economic damage in 2024 (about $6.8 billion), followed by Flash Floods (about $3.2 billion), Tropical Storms (about $2.2 billion), and Tornadoes (about $1.7 billion). The most damaging events are mostly not the most harmful to health. Heat caused the most deaths and injuries but does not appear in the top 10 for damage. Flash Flood and Tornado are the only event types in the top four for both health harm and economic damage.
 
