@@ -2,26 +2,345 @@
 title: "Analysis-of-NOAA-Storm-Database"
 author: "Taylor Evans"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
-
-```{r setup}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-```
 
 ## Synopsis
 
-(Write this last. 10 sentences max.)
+This analysis uses the NOAA Storm Events Database for 2024 to identify which severe weather events cause the most harm to people and property, and where and when different events occur. We started from three raw files (details, fatalities, and locations) and joined them by event ID, but because the join repeats rows, all event counts come from the details table of 69,802 events. During cleaning, we put months in calendar order, combined Heat and Excessive Heat into one category, converted damage estimates to dollar amounts, and limited the state analysis to the 50 states and DC. Heat was the most harmful event type to population health, with 745 deaths and injuries, followed closely by tornadoes with 711. The two differ in kind, since heat caused mostly deaths (472) while tornadoes caused mostly injuries (658). Thunderstorm Wind was the most common event in 36 of the 51 places, and the exceptions followed regional patterns, such as Hail in Texas, Heat in Oklahoma, High Wind in the West, and Heavy Snow in Colorado and the Pacific Northwest. Event types also showed strong seasonal patterns, with winter events peaking in January, Hail and Thunderstorm Wind in May, Heat in July, Flash Floods in August, and Drought in November. For our own question on economic damage, hurricanes caused about $6.8 billion in property and crop damage from only 76 events, more than twice the damage of flash floods, the next highest at about $3.2 billion. The most damaging events were mostly not the most harmful to health, and only Flash Flood and Tornado ranked in the top four for both. Damage totals include only events with a reported estimate, so they likely understate the true cost.
 
 ## Data Processing
+
+The data come from the U.S. National Oceanic and Atmospheric Administration (NOAA) Storm Events Database. This database tracks major storms and weather events in the United States, including when and where they happened and estimates of fatalities, injuries, and property damage. We used three raw files for 2024 (file version `c20261119`): the **details** file, the **fatalities** file, and the **locations** file. All three are linked by the `EVENT_ID` variable. We read the compressed `.csv.gz` files directly, so no processing happened outside this document.
+
+### Loading and joining the raw data
+
+**Code explanation:**
+
+1. 1st line: `library(dplyr)` loads the package we use to join and summarize data.
+2. 2nd line: `library(readr)` loads the package we use to read and write CSV files.
+3. 3rd line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
+4. 4th line: reads the raw fatalities file, which has one row per person who died.
+5. 5th line: reads the raw locations file, which has one row per point along an event's path.
+6. 6th to 8th lines: `left_join()` keeps every row of `details` and brings in the matching rows from `locations`, then from `fatalities`, using `EVENT_ID` as the common key. Events with no match get `NA` in the new columns.
+7. 9th line: `write_csv()` saves the joined data as `StormEvents_joined_data.csv` in the `data` folder.
+
+The file paths start at the `data` folder inside the project, not at a folder on one specific computer, so the analysis runs on any machine that has the project folder. `cache = TRUE` saves this chunk's result after the first knit, so later knits skip reloading the large details file.
+
+```{r load-data, cache=TRUE}
+library(dplyr)
+library(readr)
+
+details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz")
+fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz")
+locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz")
+
+joined_data <- details %>%
+  left_join(locations, by = "EVENT_ID") %>%
+  left_join(fatalities, by = "EVENT_ID")
+
+write_csv(joined_data, "data/StormEvents_joined_data.csv")
+```
+
+### Checking the join
+
+One event can have several location rows and several fatality rows. When we join on `EVENT_ID`, each location row gets matched with each fatality row, so a single event can show up many times in `joined_data`. Before analyzing anything, we compared the row counts and the total direct deaths in the two tables.
+
+**Code explanation:**
+
+1. 1st line: `data.frame()` builds a small comparison table from named vectors, with one row for each dataset.
+2. 2nd line: `nrow()` returns the number of rows in each dataset.
+3. 3rd and 4th lines: `sum(..., na.rm = TRUE)` adds up `DEATHS_DIRECT` in each dataset. `na.rm = TRUE` removes missing values before adding.
+
+```{r join-check}
+data.frame(
+  dataset       = c("details", "joined_data"),
+  rows          = c(nrow(details), nrow(joined_data)),
+  direct_deaths = c(sum(details$DEATHS_DIRECT, na.rm = TRUE),
+                    sum(joined_data$DEATHS_DIRECT, na.rm = TRUE))
+)
+```
+
+The details table has one row per event (69,802 rows for 69,802 events). The joined table has extra rows, and its death total is inflated by the repeated rows. For this reason, every count of events, deaths, and injuries in this report comes from the `details` table. We use the joined table only where we need the location or fatality details.
+
+### Cleaning the month variable
+
+`MONTH_NAME` is stored as plain text, so R would sort it alphabetically (April, August, December...). We converted it to a factor with the months in calendar order so tables and plots read January through December.
+
+**Code explanation:**
+
+1. 1st line: `mutate()` changes an existing column in `details`.
+2. 2nd to 4th lines: `factor()` turns `MONTH_NAME` into a categorical variable. The `levels` argument sets the order of the categories, so we list the twelve months in calendar order.
+
+```{r clean-months}
+details <- details %>%
+  mutate(MONTH_NAME = factor(MONTH_NAME,
+                             levels = c("January", "February", "March", "April", "May", "June",
+                                        "July", "August", "September", "October", "November", "December")))
+```
+
+### Combining the two heat categories
+
+NOAA records Heat and Excessive Heat as separate event types. Both describe heat events, and keeping them apart splits heat's impact across two categories. We combined them into one "Heat" category.
+
+**Code explanation:**
+
+1. 1st line: `mutate()` changes the existing `EVENT_TYPE` column in `details`.
+2. 2nd line: `ifelse()` checks each row. If `EVENT_TYPE` is "Excessive Heat", it's replaced with "Heat". Otherwise the original value stays.
+
+```{r combine-heat}
+details <- details %>%
+  mutate(EVENT_TYPE = ifelse(EVENT_TYPE == "Excessive Heat", "Heat", EVENT_TYPE))
+```
+
+### Creating a total health impact variable
+
+To measure harm to population health, we added direct deaths, indirect deaths, direct injuries, and indirect injuries into one total for each event. This counts every death and injury NOAA linked to an event.
+
+**Code explanation:**
+
+1. 1st line: `mutate()` creates a new column in `details`.
+2. 2nd and 3rd lines: `HEALTH_TOTAL` adds the four death and injury columns row by row, which gives one total per event.
+
+```{r health-total}
+details <- details %>%
+  mutate(HEALTH_TOTAL = DEATHS_DIRECT + DEATHS_INDIRECT +
+                        INJURIES_DIRECT + INJURIES_INDIRECT)
+```
+
+### Converting damage estimates to dollar amounts
+
+NOAA stores property and crop damage as text with a letter for the unit, such as "10.00K" for $10,000, "1.50M" for $1.5 million, and "1.00B" for $1 billion. We converted these to numeric dollar amounts so they can be added and compared. Events with no damage estimate stay `NA` and are left out of the totals, so the damage totals in this report count only events with a reported estimate.
+
+**Code explanation:**
+
+1. 1st line: `function(x)` creates our own function, `convert_damage`, so we can apply the same steps to both damage columns without repeating code.
+2. 2nd line: `gsub("[KMB]", "", x)` removes the letter K, M, or B from each value. `[KMB]` is a character class that matches any one of those three letters. `as.numeric()` then turns the remaining text, like "10.00", into a number.
+3. 3rd to 5th lines: `grepl()` returns TRUE if a value contains that letter. The nested `ifelse()` picks the matching multiplier: 1,000 for K, 1,000,000 for M, and 1,000,000,000 for B.
+4. 6th line: multiplies the number by its multiplier, which gives the dollar amount. A missing value stays `NA`.
+5. 7th to 9th lines: `mutate()` uses `convert_damage()` to create two new numeric columns, `PROPERTY_DMG` and `CROP_DMG`.
+
+```{r convert-damage}
+convert_damage <- function(x) {
+  number     <- as.numeric(gsub("[KMB]", "", x))
+  multiplier <- ifelse(grepl("K", x), 1000,
+                ifelse(grepl("M", x), 1000000,
+                ifelse(grepl("B", x), 1000000000, 1)))
+  number * multiplier
+}
+
+details <- details %>%
+  mutate(PROPERTY_DMG = convert_damage(DAMAGE_PROPERTY),
+         CROP_DMG     = convert_damage(DAMAGE_CROPS))
+```
+
+### Keeping only the 50 states and DC
+
+The `STATE` column includes 4 U.S. territories and 13 bodies of water (such as the Gulf of Mexico and the Great Lakes) along with the 50 states and DC. Question 2 asks about states, so we made a separate dataset without those 17 areas. The full `details` table stays unchanged for the other questions.
+
+**Code explanation:**
+
+1. 1st line: `filter()` keeps only the rows that meet a condition, and saves them as `details_states`.
+2. 2nd line: `%in%` checks whether each `STATE` value appears in the list. The `!` flips the result, so `filter()` keeps the rows that are *not* in the list.
+3. 3rd to 7th lines: the list of the 4 territories and 13 bodies of water to remove.
+
+```{r filter-states}
+details_states <- details %>%
+  filter(!(STATE %in% c("AMERICAN SAMOA", "GUAM", "PUERTO RICO", "VIRGIN ISLANDS",
+                        "ATLANTIC NORTH", "ATLANTIC SOUTH", "E PACIFIC", "GUAM WATERS",
+                        "GULF OF ALASKA", "GULF OF MEXICO", "LAKE ERIE", "LAKE HURON",
+                        "LAKE MICHIGAN", "LAKE ONTARIO", "LAKE ST CLAIR", "LAKE SUPERIOR",
+                        "ST LAWRENCE R")))
+```
 
 ## Results
 
 ### Question 1: Which event types are most harmful to population health?
 
+**Code explanation:**
+
+1. 1st line: `health_by_type <-` saves the result. The pipe `%>%` feeds `details` into the next function.
+2. 2nd line: `group_by()` groups the events by `EVENT_TYPE`, so the next step calculates one result per event type.
+3. 3rd to 5th lines: `summarize()` creates one row per event type. `sum()` adds up deaths (direct plus indirect), injuries (direct plus indirect), and the total health impact within each group.
+4. 6th line: `arrange(desc())` sorts the event types from the highest total to the lowest.
+5. 7th line: `head(..., 10)` shows the 10 most harmful event types.
+
+```{r q1-table}
+health_by_type <- details %>%
+  group_by(EVENT_TYPE) %>%
+  summarize(deaths       = sum(DEATHS_DIRECT + DEATHS_INDIRECT),
+            injuries     = sum(INJURIES_DIRECT + INJURIES_INDIRECT),
+            health_total = sum(HEALTH_TOTAL)) %>%
+  arrange(desc(health_total))
+
+head(health_by_type, 10)
+```
+
+**Code explanation:**
+
+1. 1st line: `head(health_by_type, 10)` keeps the 10 most harmful event types and saves them as `top10`.
+2. 2nd line: `par(mar = c(10, 4, 3, 1))` sets the margins around the plot (bottom, left, top, right). The bottom margin is large so the sideways event names fit.
+3. 3rd line: `barplot()` draws one bar per event type, with the bar height set by `health_total`.
+4. 4th line: `names.arg` puts the event type names under each bar.
+5. 5th line: `las = 2` rotates the labels so they're easier to read.
+6. 6th to 8th lines: `col` sets the bar color, `main` adds the title, and `ylab` labels the y-axis.
+
+```{r q1-plot}
+top10 <- head(health_by_type, 10)
+par(mar = c(10, 4, 3, 1))
+barplot(top10$health_total,
+        names.arg = top10$EVENT_TYPE,
+        las = 2,
+        col = "steelblue",
+        main = "Top 10 Storm Event Types by Deaths and Injuries, U.S. 2024",
+        ylab = "Total deaths and injuries")
+```
+
+**Figure 1.** Total deaths and injuries (direct and indirect) for the 10 most harmful storm event types in the United States in 2024. Heat (including Excessive Heat) caused the most combined harm, followed closely by tornadoes.
+**Answer:** Heat (including Excessive Heat) was the most harmful event type in 2024, with 745 deaths and injuries, followed closely by tornadoes with 711. Heat caused far more deaths (472 vs. 53), while tornadoes caused mostly injuries.
+
 ### Question 2: Which event types happen most in which states?
+
+**Code explanation:**
+
+1. 1st line: `table()` with two variables makes a two-way table that counts how many events of each type happened in each state. `as.data.frame()` turns that table into a data frame with one row per state and event type pair, plus a `Freq` column with the count.
+2. 2nd line: `rename()` gives the columns clear names, using `new_name = old_name`.
+3. 3rd line: `top_type_by_state <-` saves the result. The pipe feeds `state_type_counts` into the next function.
+4. 4th line: `group_by(STATE)` groups the rows by state.
+5. 5th line: `filter(events == max(events))` keeps only the row with the highest count within each state. That's the most common event type there.
+6. 6th line: `arrange(desc(events))` sorts the states from the most events to the fewest.
+7. 7th line: `as.data.frame()` turns the result back into a plain data frame so all 51 rows print, not just the first 10.
+
+```{r q2-table}
+state_type_counts <- as.data.frame(table(details_states$STATE, details_states$EVENT_TYPE)) %>%
+  rename(STATE = Var1, EVENT_TYPE = Var2, events = Freq)
+
+top_type_by_state <- state_type_counts %>%
+  group_by(STATE) %>%
+  filter(events == max(events)) %>%
+  arrange(desc(events)) %>%
+  as.data.frame()
+
+top_type_by_state
+```
+
+**Code explanation:**
+
+1. 1st line: `as.character()` turns `EVENT_TYPE` from a factor back into plain text. Without this step, `table()` would also list the event types that aren't the top type in any state, each with a count of 0. `table()` counts how many states have each event type as their most common. `sort(..., decreasing = TRUE)` orders those counts from highest to lowest.
+2. 2nd line: `par(mar = c(9, 4, 3, 1))` makes the bottom margin large enough for the sideways labels.
+3. 3rd to 7th lines: `barplot()` draws one bar per event type. `las = 2` rotates the labels, `col` sets the color, `main` adds the title, and `ylab` labels the y-axis.
+
+```{r q2-plot}
+top_type_counts <- sort(table(as.character(top_type_by_state$EVENT_TYPE)), decreasing = TRUE)
+par(mar = c(9, 4, 3, 1))
+barplot(top_type_counts,
+        las = 2,
+        col = "darkorange",
+        main = "Most Common Storm Event Type in Each State, U.S. 2024",
+        ylab = "Number of states (including DC)")
+```
+
+**Figure 2.** Number of states (50 states plus DC) where each event type was the most frequently recorded storm event in 2024. Thunderstorm Wind was the most common event in 36 of 51 places, while the remaining 15 were led by regional events such as High Wind in the West and Heavy Snow in the Pacific Northwest and Colorado.
+
+**Answer:** Thunderstorm Wind was the most common event type in 36 of the 51 places. Texas was led by Hail and Oklahoma by Heat, and the remaining exceptions followed regional patterns, such as High Wind in the West, Heavy Snow in Colorado, Washington, and Oregon, Blizzard in Alaska, and High Surf in Hawaii.
 
 ### Question 3: Which event types are characteristic of which months?
 
-### Question 4: (your own question)
+**Code explanation:**
 
+1. 1st line: `table(details$EVENT_TYPE)` counts the events of each type. `sort(..., decreasing = TRUE)` orders them from most to least common, `head(..., 10)` keeps the top 10, and `names()` pulls out just the event type names. They're saved as `top10_types`.
+2. 2nd and 3rd lines: `filter()` with `%in%` keeps only the events whose type is in `top10_types`, and saves them as `top_types_data`.
+3. 4th line: `table()` with two variables counts the events of each type in each month. `as.data.frame()` turns that table into a data frame with one row per event type and month pair.
+4. 5th line: `rename()` gives the columns clear names.
+5. 6th and 7th lines: `group_by(EVENT_TYPE)` groups the rows by event type, and `filter(events == max(events))` keeps the month with the most events for each type. That's its peak month.
+6. 8th line: `arrange(MONTH)` sorts the results in calendar order. This works because `MONTH_NAME` is the factor we created during cleaning.
+7. 9th line: `as.data.frame()` turns the result back into a plain data frame so every row prints.
+
+```{r q3-table}
+top10_types <- names(head(sort(table(details$EVENT_TYPE), decreasing = TRUE), 10))
+
+top_types_data <- details %>%
+  filter(EVENT_TYPE %in% top10_types)
+
+peak_month_by_type <- as.data.frame(table(top_types_data$EVENT_TYPE, top_types_data$MONTH_NAME)) %>%
+  rename(EVENT_TYPE = Var1, MONTH = Var2, events = Freq) %>%
+  group_by(EVENT_TYPE) %>%
+  filter(events == max(events)) %>%
+  arrange(MONTH) %>%
+  as.data.frame()
+
+peak_month_by_type
+```
+
+**Code explanation:**
+
+1. Chunk options: `fig.width = 12, fig.height = 6` make the figure wider and taller than the default so all 10 panels fit.
+2. 1st line: `par(mfrow = c(2, 5))` splits the figure into 2 rows and 5 columns, one spot per event type. `mar` sets smaller margins so each panel has more room.
+3. 2nd line: the `for` loop repeats the steps inside `{ }` once for each event type in `top10_types`. Each time through, `type` holds the current event type.
+4. 3rd line: `top_types_data$EVENT_TYPE == type` gives TRUE for rows of the current type. Putting that inside `[ ]` keeps only those rows' months, saved as `type_months`.
+5. 4th line: `table(type_months)` counts the events in each month. Since `MONTH_NAME` is a factor, months with zero events still show up, in calendar order. `barplot()` draws those 12 counts.
+6. 5th line: `names.arg` labels the bars with each month's first letter so the labels fit.
+7. 6th and 7th lines: `col` sets the bar color, and `main = type` titles each panel with its event type.
+
+```{r q3-plot, fig.width=12, fig.height=6}
+par(mfrow = c(2, 5), mar = c(3, 3, 3, 1))
+for (type in top10_types) {
+  type_months <- top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == type]
+  barplot(table(type_months),
+          names.arg = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"),
+          col = "seagreen",
+          main = type)
+}
+```
+
+**Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024. Each panel has its own y-axis scale, so compare the shape of each pattern, not the bar heights across panels. Winter Weather and Heavy Snow cluster in the cold months, Heat is almost entirely limited to May through September, and Flood and Drought spread across the whole year.
+
+**Answer:** Storm event types follow strong seasonal patterns. Winter Weather, Heavy Snow, and High Wind peak in January, Hail and Thunderstorm Wind peak in May, Heat peaks in July, Flash Flood and Marine Thunderstorm Wind peak in August, and Drought peaks in November. Some types are tightly tied to one season, while others, like Flood, happen throughout the year.
+
+### Question 4: Which event types cause the greatest economic damage?
+
+**Code explanation:**
+
+1. 1st line: `damage_by_type <-` saves the result. The pipe feeds `details` into the next function.
+2. 2nd line: `group_by()` groups the events by `EVENT_TYPE`.
+3. 3rd and 4th lines: `summarize()` adds up property damage and crop damage within each event type. `na.rm = TRUE` leaves out events with no damage estimate. Dividing by 1,000,000 converts the totals to millions of dollars.
+4. 5th line: `mutate()` adds a new column with the combined property and crop damage for each event type.
+5. 6th line: `arrange(desc())` sorts the event types from the most damage to the least.
+6. 7th line: `head(..., 10)` shows the 10 most damaging event types.
+
+```{r q4-table}
+damage_by_type <- details %>%
+  group_by(EVENT_TYPE) %>%
+  summarize(property_millions = sum(PROPERTY_DMG, na.rm = TRUE) / 1000000,
+            crop_millions     = sum(CROP_DMG, na.rm = TRUE) / 1000000) %>%
+  mutate(total_millions = property_millions + crop_millions) %>%
+  arrange(desc(total_millions))
+
+head(damage_by_type, 10)
+```
+
+**Code explanation:**
+
+1. 1st line: `head(damage_by_type, 10)` keeps the 10 most damaging event types and saves them as `top10_damage`.
+2. 2nd line: `par(mar = c(10, 5, 3, 1))` sets the margins. The large bottom margin fits the sideways event names, and the wider left margin fits the larger y-axis numbers.
+3. 3rd line: `barplot()` draws one bar per event type, with the bar height set by `total_millions`.
+4. 4th line: `names.arg` puts the event type names under each bar.
+5. 5th line: `las = 2` rotates the labels so they're easier to read.
+6. 6th to 8th lines: `col` sets the bar color, `main` adds the title, and `ylab` labels the y-axis.
+
+```{r q4-plot}
+top10_damage <- head(damage_by_type, 10)
+par(mar = c(10, 5, 3, 1))
+barplot(top10_damage$total_millions,
+        names.arg = top10_damage$EVENT_TYPE,
+        las = 2,
+        col = "firebrick",
+        main = "Top 10 Storm Event Types by Property and Crop Damage, U.S. 2024",
+        ylab = "Total damage (millions of dollars)")
+```
+
+**Figure 4.** Combined property and crop damage, in millions of dollars, for the 10 most damaging storm event types in the United States in 2024. Totals include only events with a reported damage estimate. Hurricanes caused about $6.8 billion in damage from 76 events, more than twice the damage of any other event type.
+
+**Answer:** Hurricanes caused the most economic damage in 2024 (about $6.8 billion), followed by Flash Floods (about $3.2 billion), Tropical Storms (about $2.2 billion), and Tornadoes (about $1.7 billion). The most damaging events are mostly not the most harmful to health. Heat caused the most deaths and injuries but does not appear in the top 10 for damage. Flash Flood and Tornado are the only event types in the top four for both health harm and economic damage.
