@@ -1,0 +1,27 @@
+---
+title: "Analysis-of-NOAA-Storm-Database"
+author: "Taylor Evans"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Synopsis
+
+(Write this last. 10 sentences max.)
+
+## Data Processing
+
+## Results
+
+### Question 1: Which event types are most harmful to population health?
+
+### Question 2: Which event types happen most in which states?
+
+### Question 3: Which event types are characteristic of which months?
+
+### Question 4: (your own question)
+
