@@ -371,3 +371,15 @@ barplot(top10_damage$total_millions,
 **Figure 4.** Combined property and crop damage, in millions of dollars, for the 10 most damaging storm event types in the United States in 2024. Totals include only events with a reported damage estimate. Hurricanes caused about $6.8 billion in damage from 76 events, more than twice the damage of any other event type.
 
 **Answer:** Hurricanes caused the most economic damage in 2024 (about $6.8 billion), followed by Flash Floods (about $3.2 billion), Tropical Storms (about $2.2 billion), and Tornadoes (about $1.7 billion). The most damaging events are mostly not the most harmful to health. Heat caused the most deaths and injuries but does not appear in the top 10 for damage. Flash Flood and Tornado are the only event types in the top four for both health harm and economic damage.
+
+## Session Information
+
+To support reproducibility, we recorded the R version, operating system, and package versions used to produce this report.
+
+**Code explanation:**
+
+1. 1st line: `sessionInfo()` prints the R version, the operating system, and the version of every package loaded in the current session.
+
+```{r session-info}
+sessionInfo()
+```

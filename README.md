@@ -26,6 +26,8 @@ This analysis uses the 2024 files, version `c20261119`:
 
 The three raw files are included in the `data` folder. The joined file, `StormEvents_joined_data.csv`, is not included because of its size. The R Markdown document creates it each time it is knit.
 
+Files downloaded on November 23, 2026.
+
 ## Files
 
 | File | Description |
@@ -34,6 +36,17 @@ The three raw files are included in the `data` folder. The joined file, `StormEv
 | `FinalAnalysis.R` | R script with all code from the report |
 | `data/` | Raw NOAA data files for 2024 |
 | `README.md` | This file |
+
+## Software
+
+The report was produced with:
+
+- R 4.6.1 on macOS Tahoe 26.6.2
+- dplyr 1.2.1
+- readr 2.2.0
+- knitr 1.51 and rmarkdown 2.31 (used to knit the report)
+
+The full session information is at the end of the published report.
 
 ## How to reproduce
 
