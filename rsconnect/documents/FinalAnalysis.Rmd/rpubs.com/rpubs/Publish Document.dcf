@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1478470/d3d6dd463fe44d908554ce1b8eb22afb
+appGuid:
+bundleId: https://api.rpubs.com/api/v1/document/1478470/d3d6dd463fe44d908554ce1b8eb22afb
+url: http://rpubs.com/taylor_evans/1478470
+version: 1

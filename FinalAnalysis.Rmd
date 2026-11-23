@@ -21,18 +21,25 @@ The data come from the U.S. National Oceanic and Atmospheric Administration (NOA
 
 1. 1st line: `library(dplyr)` loads the package we use to join and summarize data.
 2. 2nd line: `library(readr)` loads the package we use to read and write CSV files.
-3. 3rd line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
-4. 4th line: reads the raw fatalities file, which has one row per person who died.
-5. 5th line: reads the raw locations file, which has one row per point along an event's path.
-6. 6th to 8th lines: the pipe `%>%` passes data from one step to the next. `left_join()` merges two datasets based on a common key, here `EVENT_ID`. It keeps all rows from the left dataset (`details`) and brings in the matching rows from the right dataset (`locations`, then `fatalities`). Events with no match get `NA` in the new columns.
-7. 9th line: `write_csv()` saves the joined data as `StormEvents_joined_data.csv` in the `data` folder.
+
+These are in their own chunk so they load every time the document is knit, even when the data chunk below is read from the cache.
+
+```{r load-packages}
+library(dplyr)
+library(readr)
+```
+
+**Code explanation:**
+
+1. 1st line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
+2. 2nd line: reads the raw fatalities file, which has one row per person who died.
+3. 3rd line: reads the raw locations file, which has one row per point along an event's path.
+4. 4th to 6th lines: the pipe `%>%` passes data from one step to the next. `left_join()` merges two datasets based on a common key, here `EVENT_ID`. It keeps all rows from the left dataset (`details`) and brings in the matching rows from the right dataset (`locations`, then `fatalities`). Events with no match get `NA` in the new columns.
+5. 7th line: `write_csv()` saves the joined data as `StormEvents_joined_data.csv` in the `data` folder.
 
 The file paths start at the `data` folder inside the project, not at a folder on one specific computer, so the analysis runs on any machine that has the project folder. `cache = TRUE` saves this chunk's result after the first knit, so later knits skip reloading the large details file.
 
 ```{r load-data, cache=TRUE}
-library(dplyr)
-library(readr)
-
 details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz")
 fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz")
 locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz")
@@ -323,7 +330,8 @@ Using the dollar amounts created during cleaning, we added up property and crop 
 4. 5th line: `mutate()` creates a new variable with the combined property and crop damage for each event type.
 5. 6th to 8th lines: `round(..., digits = 1)` rounds each damage column to one decimal place so the table is easier to read.
 6. 9th line: `arrange(desc())` sorts the event types from the most damage to the least.
-7. 10th line: `head(..., 10)` shows the 10 most damaging event types.
+7. 10th line: `as.data.frame()` turns the result into a plain data frame so the rounded values print in full.
+8. 11th line: `head(..., 10)` shows the 10 most damaging event types.
 
 ```{r q4-table}
 damage_by_type <- details %>%
@@ -334,7 +342,8 @@ damage_by_type <- details %>%
   mutate(property_millions = round(property_millions, digits = 1),
          crop_millions     = round(crop_millions, digits = 1),
          total_millions    = round(total_millions, digits = 1)) %>%
-  arrange(desc(total_millions))
+    arrange(desc(total_millions)) %>%
+    as.data.frame()
 
 head(damage_by_type, 10)
 ```
