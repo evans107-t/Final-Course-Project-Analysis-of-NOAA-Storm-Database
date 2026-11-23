@@ -469,10 +469,10 @@ person who died.</li>
 <li>3rd line: reads the raw locations file, which has one row per point
 along an event’s path.</li>
 <li>4th to 6th lines: the pipe <code>%&gt;%</code> passes data from one
-step to the next. <code>left_join()</code> merges two datasets based on
+step to the next. <code>left_join()</code> merges two data sets based on
 a common key, here <code>EVENT_ID</code>. It keeps all rows from the
-left dataset (<code>details</code>) and brings in the matching rows from
-the right dataset (<code>locations</code>, then
+left data set (<code>details</code>) and brings in the matching rows
+from the right data set (<code>locations</code>, then
 <code>fatalities</code>). Events with no match get <code>NA</code> in
 the new columns.</li>
 <li>7th line: <code>write_csv()</code> saves the joined data as
@@ -531,14 +531,14 @@ counts and the total direct deaths in the two tables.</p>
 <p><strong>Code explanation:</strong></p>
 <ol style="list-style-type: decimal">
 <li>1st to 6th lines: <code>data.frame()</code> creates a small
-comparison table directly from named vectors, with one row for each
-dataset.</li>
-<li>2nd line: <code>dataset</code> names the two datasets being
+comparison table directly from named vectors, with one row for each data
+set.</li>
+<li>2nd line: <code>dataset</code> names the two data sets being
 compared.</li>
 <li>3rd line: <code>nrow()</code> returns the number of rows in each
-dataset.</li>
+data set.</li>
 <li>4th and 5th lines: <code>sum()</code> adds up
-<code>DEATHS_DIRECT</code> in each dataset. <code>na.rm = TRUE</code>
+<code>DEATHS_DIRECT</code> in each data set. <code>na.rm = TRUE</code>
 tells <code>sum()</code> to ignore missing values.</li>
 </ol>
 <pre class="r"><code>data.frame(
@@ -667,12 +667,12 @@ details &lt;- details %&gt;%
 <p>The <code>STATE</code> column includes 4 U.S. territories and 13
 bodies of water (such as the Gulf of Mexico and the Great Lakes) along
 with the 50 states and DC. Question 2 asks about states, so we made a
-separate dataset without those 17 areas. The full <code>details</code>
+separate data set without those 17 areas. The full <code>details</code>
 table stays unchanged for the other questions.</p>
 <p><strong>Code explanation:</strong></p>
 <ol style="list-style-type: decimal">
 <li>1st line: <code>details_states &lt;-</code> saves the result as a
-new dataset, so <code>details</code> itself stays unchanged.</li>
+new data set, so <code>details</code> itself stays unchanged.</li>
 <li>2nd line: <code>filter()</code> picks the rows that meet a
 condition. <code>%in%</code> checks whether each <code>STATE</code>
 value appears in a list. The <code>!</code> flips TRUE and FALSE, so
@@ -1120,6 +1120,17 @@ to health. Heat caused the most deaths and injuries but does not appear
 in the top 10 for damage. Flash Flood and Tornado are the only event
 types in the top four for both health harm and economic damage.</p>
 </div>
+</div>
+<div id="limitations" class="section level2">
+<h2>Limitations</h2>
+<p>This analysis covers 2024 only, so the rankings and seasonal patterns
+may differ in other years. Damage totals count only events with a
+reported estimate, and 15,046 events have no property damage estimate,
+so the true costs are likely higher. Question 2 counts how often each
+event type occurred, not how much harm it caused, so a state’s most
+common event type is not necessarily its most dangerous one. NOAA
+continues to revise its records after publication, and these results
+reflect the version of the files created on November 19, 2026.</p>
 </div>
 <div id="session-information" class="section level2">
 <h2>Session Information</h2>

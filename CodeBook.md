@@ -26,7 +26,7 @@ In each file name, `d2024` is the data year and `c20261119` is the date NOAA cre
 
 The steps run in this order in `FinalAnalysis.Rmd`.
 
-1. **Load and join.** The three raw files are read directly from the compressed `.csv.gz` files and joined by `EVENT_ID` with `left_join()`, keeping every row of the details file. The result, `joined_data`, is saved as `data/StormEvents_joined_data.csv`.
+1. **Load and join.** If any raw file is missing from the `data` folder, it is downloaded from NOAA with `download.file()`. The three raw files are read directly from the compressed `.csv.gz` files and joined by `EVENT_ID` with `left_join()`, keeping every row of the details file. The result, `joined_data`, is saved as `data/StormEvents_joined_data.csv`.
 2. **Check the join.** One event can have several location rows and several fatality rows, so the join repeats events. `joined_data` has 85,745 rows for 69,802 events, and its total of direct deaths is 4,852 compared with 774 in the details file. For this reason, every count of events, deaths, injuries, and damage comes from the details table, which has exactly one row per event.
 3. **Order the months.** `MONTH_NAME` is converted from text to a factor with the months in calendar order.
 4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. This reduces the number of event types from 50 to 49.

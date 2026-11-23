@@ -15,7 +15,7 @@ This analysis uses the NOAA Storm Events Database for 2024 to identify which sev
 
 The data come from the U.S. National Oceanic and Atmospheric Administration (NOAA) Storm Events Database. This database tracks major storms and weather events in the United States, including when and where they happened and estimates of fatalities, injuries, and property damage. We used three raw files for 2024 (file version `c20261119`): the **details** file, the **fatalities** file, and the **locations** file. All three are linked by the `EVENT_ID` variable. We read the compressed `.csv.gz` files directly, so no processing happened outside this document.
 
-### Loading and joining the raw data
+### Loading packages
 
 **Code explanation:**
 
@@ -57,6 +57,8 @@ for (f in file_names) {
   }
 }
 ```
+
+### Reading and joining the raw data
 
 **Code explanation:**
 

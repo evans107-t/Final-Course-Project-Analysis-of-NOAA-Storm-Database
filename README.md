@@ -56,7 +56,7 @@ The full session information is at the end of the published report.
 3. Install the required packages if needed: `install.packages(c("dplyr", "readr"))`.
 4. Open `FinalAnalysis.Rmd` and click **Knit**.
 
-All file paths are relative to the project folder, so the report runs on any computer with the project files.
+All file paths are relative to the project folder, so the report runs on any computer with the project files. If the raw files are missing from the `data` folder, the report downloads them from NOAA when it is knit.
 
 ## Key findings
 
