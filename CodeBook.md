@@ -32,7 +32,7 @@ The steps run in this order in `FinalAnalysis.Rmd`.
 4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. This reduces the number of event types from 50 to 49.
 5. **Create a health total.** `HEALTH_TOTAL` adds direct deaths, indirect deaths, direct injuries, and indirect injuries for each event.
 6. **Convert damage to dollars.** The text damage values (such as "10.00K") are converted to numeric dollar amounts in `PROPERTY_DMG` and `CROP_DMG`.
-7. **Limit Question 2 to states.** `details_states` removes 4 U.S. territories and 13 bodies of water, leaving the 50 states and DC (51 places, 66,388 events). The full details table is kept for the other questions.
+4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. Before combining, there are 3,171 Heat events and 2,660 Excessive Heat events, for 5,831 combined. This reduces the number of event types from 50 to 49. This choice affects Question 1: kept separate, each heat type has fewer deaths and injuries than tornadoes, but combined, heat ranks first.
 
 ### Inclusion choices
 
@@ -43,7 +43,7 @@ The steps run in this order in `FinalAnalysis.Rmd`.
 ### Missing values
 
 - The four death and injury columns have no missing values.
-- `DAMAGE_PROPERTY` is missing for 15,046 events and `DAMAGE_CROPS` for 15,413 events. These events stay `NA` after conversion and are left out of the damage totals with `na.rm = TRUE`. Damage totals therefore count only events with a reported estimate.
+- `DAMAGE_PROPERTY` is missing for 15,046 events and `DAMAGE_CROPS` for 15,413 events. These events stay `NA` after conversion and are left out of the damage totals with `na.rm = TRUE`. They are not set to 0, because NOAA records events with no damage as "0.00K," so a missing value means no estimate was reported, not that there was no damage. Damage totals therefore count only events with a reported estimate.
 
 ## Variables
 
@@ -84,6 +84,8 @@ These are added to the `details` table in `FinalAnalysis.Rmd`.
 | `top_type_by_state` | State | The most common event type in each state (Question 2). |
 | `peak_month_by_type` | Event type | The peak month for each of the 10 most common event types (Question 3). |
 | `damage_by_type` | Event type | Property, crop, and total damage by event type (Question 4). |
+| `state_type_counts` | State and event type pair | Number of events of each type in each state. Used to build `top_type_by_state` (Question 2). |
+| `top_types_data` | Event | The details table limited to the 10 most common event types. Used for Question 3. |
 
 ### Summary table columns
 

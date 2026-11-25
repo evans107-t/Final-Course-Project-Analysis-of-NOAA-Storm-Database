@@ -24,7 +24,7 @@ This analysis uses the 2024 files, version `c20261119`:
 - `StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz`
 - `StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz`
 
-The three raw files are included in the `data` folder. The joined file, `StormEvents_joined_data.csv`, is not included because of its size. The R Markdown document creates StormEvents_joined_data.csv in the data folder the first time the report is knit.
+The three raw files are included in the `data` folder. The joined file, `StormEvents_joined_data.csv`, is not included because of its size. The R Markdown document creates `StormEvents_joined_data.csv` in the `data` folder the first time the report is knit.
 
 Files downloaded on November 23, 2026.
 
@@ -37,6 +37,8 @@ Files downloaded on November 23, 2026.
 | `data/` | Raw NOAA data files for 2024 |
 | `README.md` | This file |
 | `CodeBook.md` | Study design, processing steps, and variable definitions |
+| `FinalAnalysis.html` | Knitted report, the same version published on RPubs |
+| `Final Course Project: Analysis of NOAA Storm Database.Rproj` | RStudio project file that sets the working directory |
 
 ## Software
 
@@ -60,7 +62,7 @@ All file paths are relative to the project folder, so the report runs on any com
 
 ## Key findings
 
-- **Health impact:** Heat caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries.
-- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC), with regional exceptions such as Hail in Texas and Heat in Oklahoma.
-- **By month:** Winter events peaked in January, Hail and Thunderstorm Wind in May, Heat in July, and Flash Floods in August.
+- **Health impact:** Heat (Heat and Excessive Heat combined) caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries. Kept separate, neither heat category would outrank tornadoes.
+- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC). The other 15 most often recorded events that fit their local climate, such as Hail in Texas and Heat in Oklahoma.
+- **By month:** Winter events peaked in January, Hail and Thunderstorm Wind in May, Heat in July, Flash Floods in August, and Drought in November.
 - **Economic damage:** Hurricanes caused about $6.8 billion in damage from only 76 events, more than twice any other event type.
