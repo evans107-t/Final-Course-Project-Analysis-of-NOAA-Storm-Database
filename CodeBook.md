@@ -117,6 +117,7 @@ These are added to the `details` table in `FinalAnalysis.Rmd`.
 | Column | Units | Description |
 |---|---|---|
 | `EVENT_TYPE` | | Event type |
+| `events` | Count | Number of events of that type |
 | `property_millions` | Millions of U.S. dollars | Total property damage, rounded to one decimal place |
 | `crop_millions` | Millions of U.S. dollars | Total crop damage, rounded to one decimal place |
 | `total_millions` | Millions of U.S. dollars | Property plus crop damage, added before rounding and then rounded to one decimal place |

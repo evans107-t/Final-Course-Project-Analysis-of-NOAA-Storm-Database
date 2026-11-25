@@ -24,7 +24,7 @@ This analysis uses the 2024 files, version `c20261119`:
 - `StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz`
 - `StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz`
 
-The three raw files are included in the `data` folder. The joined file, `StormEvents_joined_data.csv`, is not included because of its size. The R Markdown document creates it each time it is knit.
+The three raw files are included in the `data` folder. The joined file, `StormEvents_joined_data.csv`, is not included because of its size. The R Markdown document creates StormEvents_joined_data.csv in the data folder the first time the report is knit.
 
 Files downloaded on November 23, 2026.
 
