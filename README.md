@@ -1,4 +1,4 @@
-# Health Impact and Timing of Severe Weather Events in the U.S., 2024
+# Health Harm, Economic Damage, and Where and When Severe Weather Strikes in the U.S., 2024
 
 Final course project for DAT 413 (Data Stewardship), Canisius University.
 
@@ -11,7 +11,7 @@ This project analyzes the NOAA Storm Events Database for 2024 to answer four que
 1. Which event types are most harmful to population health?
 2. Which event types happen most in which states?
 3. Which event types are characteristic of which months?
-4. Which event types cause the greatest economic damage?
+4. Do the event types that cost the most also harm the most people?
 
 ## Data
 
@@ -33,7 +33,7 @@ Files downloaded on November 23, 2026.
 | File | Description |
 |---|---|
 | `FinalAnalysis.Rmd` | R Markdown report with all code, explanations, and results |
-| `FinalAnalysis.R` | R script with all code from the report |
+| `FinalAnalysis.R` | R script with all code from the report, created from the Rmd with `knitr::purl()`. The code explanations are kept as comments. |
 | `data/` | Raw NOAA data files for 2024 |
 | `README.md` | This file |
 | `CodeBook.md` | Study design, processing steps, and variable definitions |
@@ -47,7 +47,7 @@ The report was produced with:
 - R 4.6.1 on macOS Tahoe 26.6.2
 - dplyr 1.2.1
 - readr 2.2.0
-- knitr 1.51 and rmarkdown 2.31 (used to knit the report)
+- knitr 1.51 and rmarkdown 2.31 (used to knit the report and format the tables)
 
 The full session information is at the end of the published report.
 
@@ -55,14 +55,15 @@ The full session information is at the end of the published report.
 
 1. Clone or download this repository.
 2. Open `Final Course Project: Analysis of NOAA Storm Database.Rproj` in RStudio.
-3. Install the required packages if needed: `install.packages(c("dplyr", "readr", "rmarkdown"))`.
+3. Install the required packages if needed: `install.packages(c("dplyr", "readr", "knitr", "rmarkdown"))`.
 4. Open `FinalAnalysis.Rmd` and click **Knit**.
+5. To run `FinalAnalysis.R` instead of knitting, maximize the Plots pane first. Figures 2 and 3 are large panel plots and fail with "figure margins too large" in a small pane.
 
 All file paths are relative to the project folder, so the report runs on any computer with the project files. If the raw files are missing from the `data` folder, the report downloads them from NOAA when it is knit.
 
 ## Key findings
 
-- **Health impact:** Heat (Heat and Excessive Heat combined) caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries. Kept separate, neither heat category would outrank tornadoes.
-- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC). The other 15 most often recorded events that fit their local climate, such as Hail in Texas and Heat in Oklahoma. Hail and Heat were concentrated in a few states, led by Texas and Oklahoma, while Thunderstorm Wind occurred at similar levels across many states.
+- **Health impact:** Heat (Heat and Excessive Heat combined) caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries. By deaths alone, Flash Flood (118) ranks second, more than twice tornadoes (53). Kept separate, neither heat category would outrank tornadoes.
+- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC). The other 15 most often recorded events that fit their local climate, such as Hail in Texas and Heat in Oklahoma. Thunderstorm Wind made up 60% of Georgia's events, while Oregon's top type, Heavy Snow, made up only 17.6% of its events.
 - **By month:** Winter events peaked in January, Hail and Thunderstorm Wind in May, Heat in July, Flash Floods in August, and Drought in November.
-- **Economic damage:** Hurricanes caused about $6.8 billion in damage from only 76 events, more than twice any other event type.
+- **Cost vs. health:** Hurricanes caused about $6.8 billion in damage from only 76 events, more than twice any other event type. The costliest event types were mostly not the most harmful to health. Flash Flood and Tornado were the only types in the top four of both rankings, and Heat, which harmed the most people, had almost no recorded damage.
