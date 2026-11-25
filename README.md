@@ -2,7 +2,7 @@
 
 Final course project for DAT 413 (Data Stewardship), Canisius University.
 
-**Published report:** http://rpubs.com/taylor_evans/noaa-storm-2024
+**Published report:** https://rpubs.com/taylor_evans/noaa-storm-2024
 
 ## Overview
 
@@ -55,7 +55,7 @@ The full session information is at the end of the published report.
 
 1. Clone or download this repository.
 2. Open `Final Course Project: Analysis of NOAA Storm Database.Rproj` in RStudio.
-3. Install the required packages if needed: `install.packages(c("dplyr", "readr"))`.
+3. Install the required packages if needed: `install.packages(c("dplyr", "readr", "rmarkdown"))`.
 4. Open `FinalAnalysis.Rmd` and click **Knit**.
 
 All file paths are relative to the project folder, so the report runs on any computer with the project files. If the raw files are missing from the `data` folder, the report downloads them from NOAA when it is knit.
@@ -63,6 +63,6 @@ All file paths are relative to the project folder, so the report runs on any com
 ## Key findings
 
 - **Health impact:** Heat (Heat and Excessive Heat combined) caused the most deaths and injuries in 2024 (745), followed closely by tornadoes (711). Heat caused mostly deaths, while tornadoes caused mostly injuries. Kept separate, neither heat category would outrank tornadoes.
-- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC). The other 15 most often recorded events that fit their local climate, such as Hail in Texas and Heat in Oklahoma.
+- **By state:** Thunderstorm Wind was the most common event in 36 of 51 places (50 states and DC). The other 15 most often recorded events that fit their local climate, such as Hail in Texas and Heat in Oklahoma. Hail and Heat were concentrated in a few states, led by Texas and Oklahoma, while Thunderstorm Wind occurred at similar levels across many states.
 - **By month:** Winter events peaked in January, Hail and Thunderstorm Wind in May, Heat in July, Flash Floods in August, and Drought in November.
 - **Economic damage:** Hurricanes caused about $6.8 billion in damage from only 76 events, more than twice any other event type.

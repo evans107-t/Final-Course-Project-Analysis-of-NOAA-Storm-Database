@@ -29,15 +29,15 @@ The steps run in this order in `FinalAnalysis.Rmd`.
 1. **Load and join.** If any raw file is missing from the `data` folder, it is downloaded from NOAA with `download.file()`. The three raw files are read directly from the compressed `.csv.gz` files and joined by `EVENT_ID` with `left_join()`, keeping every row of the details file. The result, `joined_data`, is saved as `data/StormEvents_joined_data.csv`.
 2. **Check the join.** One event can have several location rows and several fatality rows, so the join repeats events. `joined_data` has 85,745 rows for 69,802 events, and its total of direct deaths is 4,852 compared with 774 in the details file. For this reason, every count of events, deaths, injuries, and damage comes from the details table, which has exactly one row per event.
 3. **Order the months.** `MONTH_NAME` is converted from text to a factor with the months in calendar order.
-4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. This reduces the number of event types from 50 to 49.
+4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. Before combining, there are 3,171 Heat events and 2,660 Excessive Heat events, for 5,831 combined. This reduces the number of event types from 50 to 49. This choice affects Question 1: kept separate, each heat type has fewer deaths and injuries than tornadoes, but combined, heat ranks first.
 5. **Create a health total.** `HEALTH_TOTAL` adds direct deaths, indirect deaths, direct injuries, and indirect injuries for each event.
 6. **Convert damage to dollars.** The text damage values (such as "10.00K") are converted to numeric dollar amounts in `PROPERTY_DMG` and `CROP_DMG`.
-4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. Before combining, there are 3,171 Heat events and 2,660 Excessive Heat events, for 5,831 combined. This reduces the number of event types from 50 to 49. This choice affects Question 1: kept separate, each heat type has fewer deaths and injuries than tornadoes, but combined, heat ranks first.
+
 
 ### Inclusion choices
 
 - **Year:** 2024 only.
-- **Question 2:** the 50 states and DC. Removed areas: American Samoa, Guam, Puerto Rico, Virgin Islands, Atlantic North, Atlantic South, E Pacific, Guam Waters, Gulf of Alaska, Gulf of Mexico, Lake Erie, Lake Huron, Lake Michigan, Lake Ontario, Lake St Clair, Lake Superior, and St Lawrence R.
+- **Question 2:** the 50 states and DC. Removed areas: American Samoa, Guam, Puerto Rico, Virgin Islands, Atlantic North, Atlantic South, E Pacific, Guam Waters, Gulf of Alaska, Gulf of Mexico, Lake Erie, Lake Huron, Lake Michigan, Lake Ontario, Lake St Clair, Lake Superior, and St Lawrence R. The table covers all 51 places. Figure 2 shows only the 6 most common event types in the 50 states and DC and, for each one, the 5 states with the most events.
 - **Question 3:** the 10 most common event types, which together make up about 82% of all events. Many other event types have very few events, some only one or two.
 
 ### Missing values

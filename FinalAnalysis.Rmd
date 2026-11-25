@@ -19,12 +19,13 @@ The data come from the U.S. National Oceanic and Atmospheric Administration (NOA
 
 **Code explanation:**
 
-1. 1st line: `library(dplyr)` loads dplyr, a package for working with data frames, such as joining, filtering, and summarizing them.
-2. 2nd line: `library(readr)` loads readr, a package for reading and writing files such as CSVs.
+1. Chunk options: `message = FALSE` hides the messages dplyr prints when it loads, such as the list of functions it masks from other packages. The code itself still appears in the report because `echo` stays TRUE.
+2. 1st line: `library(dplyr)` loads dplyr, a package for working with data frames, such as joining, filtering, and summarizing them.
+3. 2nd line: `library(readr)` loads readr, a package for reading and writing files such as CSVs.
 
 These are in their own chunk so they load every time the document is knit, even when the data chunk below is read from the cache.
 
-```{r load-packages}
+```{r load-packages, message=FALSE}
 library(dplyr)
 library(readr)
 ```
@@ -62,7 +63,7 @@ for (f in file_names) {
 
 **Code explanation:**
 
-1. 1st line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first.
+1. 1st line: `read_csv()` reads the raw details file, which has one row per storm event. It can open `.gz` files without unzipping them first. `show_col_types = FALSE` stops `read_csv()` from printing a summary of every column's type.
 2. 2nd line: reads the raw fatalities file, which has one row per person who died.
 3. 3rd line: reads the raw locations file, which has one row per point along an event's path.
 4. 4th line: `joined_data <-` saves the result, and the pipe `%>%` passes `details` to the next step.
@@ -73,9 +74,9 @@ for (f in file_names) {
 The file paths start at the `data` folder inside the project, not at a folder on one specific computer, so the analysis runs on any machine that has the project folder. `cache = TRUE` saves this chunk's result after the first knit, so later knits skip reloading the large details file.
 
 ```{r load-data, cache=TRUE}
-details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz")
-fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz")
-locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz")
+details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
+fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
+locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
 
 joined_data <- details %>%
   left_join(locations, by = "EVENT_ID") %>%
@@ -265,7 +266,7 @@ barplot(top10$health_total,
 
 ### Question 2: Which event types happen most in which states?
 
-To answer this question, I used `details_states`, which covers the 50 states and DC. For each of these 51 places, I counted how many events of each type were recorded and kept the type with the highest count. The table lists every place with its most common event type, and Figure 2 shows how many places share each one. This question measures how often each event type happens, not how much harm it causes.
+To answer this question, I used `details_states`, which covers the 50 states and DC. For each of these 51 places, I counted how many events of each type were recorded and kept the type with the highest count. The table lists every place with its most common event type, and Figure 2 shows the five states with the most events for each of the six most common event types.
 
 **Code explanation:**
 
@@ -277,6 +278,7 @@ To answer this question, I used `details_states`, which covers the 50 states and
 6. 6th line: `arrange(desc(events))` sorts the states from the most events to the fewest.
 7. 7th line: `group_by()` and `filter()` return a tibble, a version of a data frame that prints only as many rows as fit on the screen. `as.data.frame()` turns the result into a plain data frame, so all 51 rows print.
 8. 8th line: prints the table.
+
 
 ```{r q2-table}
 state_type_counts <- as.data.frame(table(details_states$STATE, details_states$EVENT_TYPE)) %>%
@@ -293,29 +295,47 @@ top_type_by_state
 
 **Code explanation:**
 
-1. Chunk options: `fig.width = 9, fig.height = 6` make the figure wider and taller than the default so the bars and labels have room.
-2. 1st line: `as.character()` coerces `EVENT_TYPE` from a factor to character (text). Without this step, `table()` would also list the event types that aren't the top type in any state, each with a count of 0. `table()` counts how many states have each event type as their most common. `sort(..., decreasing = TRUE)` orders those counts from highest to lowest.
-3. 2nd line: `par(mar = c(9, 4, 3, 1))` makes the bottom margin large enough for the sideways labels.
-4. 3rd line: `barplot()` creates a bar chart with a bar for each event type, and the counts in `top_type_counts` set each bar's height.
-5. 4th line: `ylim = c(0, 40)` sets the y-axis to run from 0 to 40. That leaves space above the tallest bar (Thunderstorm Wind, 36), so it doesn't touch the top of the plot.
-6. 5th line: `las = 2` rotates the axis labels so they are easier to read. Here it turns the event type names sideways so the long names don't overlap.
-7. 6th line: `col` sets the color of each bar, in order. `"darkorange"` colors the first bar (Thunderstorm Wind), and `rep("gray80", 8)` repeats light gray for the other eight bars. `c()` combines all nine colors into one list.
-8. 7th and 8th lines: `main` adds the title, and `ylab` labels the y-axis.
+1. Chunk options: `fig.width = 10, fig.height = 12` make the figure big enough for 6 bar graphs with sideways state names.
+2. 1st line: `table(details_states$EVENT_TYPE)` counts how many times each event type occurs in the 50 states and DC. `sort(..., decreasing = TRUE)` orders them from most to least common, `head(..., 6)` keeps the top 6, and `names()` returns just the event type names. They're saved as `top6_types`.
+3. 2nd line: `par(mfrow = c(3, 2))` splits the figure into 3 rows and 2 columns, one spot per event type. `mar` sets a large bottom margin so the sideways state names fit, and a wider left margin so the y-axis numbers fit.
+4. 3rd line: the `for` loop repeats the steps inside `{ }` once for each event type in `top6_types`. Each time through, `type` holds the current event type.
+5. 4th line: `details_states$EVENT_TYPE == type` gives TRUE for rows of the current type. Putting that inside `[ ]` keeps only those rows' states, saved as `type_states`.
+6. 5th line: `table(type_states)` counts how many events of the current type happened in each state. `sort(..., decreasing = TRUE)` orders the states from most to fewest, and `head(..., 5)` keeps the top 5, saved as `top5_states`.
+7. 6th line: `pretty()` picks a set of round, evenly spaced numbers that cover the range from 0 to the tallest bar, such as 0, 200, 400, up to 1,200. The last number is always at or above the tallest bar. They're saved as `y_ticks`.
+8. 7th line: `barplot()` creates a bar chart from those 5 counts, with the state names under the bars.
+9. 8th line: `las = 2` turns the state names sideways so long names like "NORTH CAROLINA" don't overlap.
+10. 9th line: `ylim` sets the y-axis to run from 0 to the largest number in `y_ticks`, so the axis always reaches past the tallest bar.
+11. 10th line: `axes = FALSE` stops `barplot()` from drawing its own y-axis, because its numbers can stop below the tallest bar.
+12. 11th line: `col` uses `ifelse()` to pick a color for each bar. The test `top5_states == max(top5_states)` is TRUE only for the state with the most events of the current type. If the test is TRUE, `ifelse()` uses `"firebrick"`. Otherwise it uses `"gray80"`. This highlights the leading state in each bar graph.
+13. 12th line: `main = type` titles each bar graph with its event type.
+14. 13th line: `ylab` labels the y-axis.
+15. 14th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 6th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
 
-```{r q2-plot, fig.width=9, fig.height=6}
-top_type_counts <- sort(table(as.character(top_type_by_state$EVENT_TYPE)), decreasing = TRUE)
-par(mar = c(9, 4, 3, 1))
-barplot(top_type_counts,
-        ylim = c(0, 40),
-        las = 2,
-        col = c("darkorange", rep("gray80", 8)),
-        main = "Most Common Storm Event Type in Each State, U.S. 2024",
-        ylab = "Number of states (including DC)")
+```{r q2-plot-types, fig.width=10, fig.height=12}
+top6_types <- names(head(sort(table(details_states$EVENT_TYPE), decreasing = TRUE), 6))
+par(mfrow = c(3, 2), mar = c(9, 5, 3, 1))
+for (type in top6_types) {
+  type_states <- details_states$STATE[details_states$EVENT_TYPE == type]
+  top5_states <- head(sort(table(type_states), decreasing = TRUE), 5)
+  y_ticks <- pretty(c(0, max(top5_states)))
+  barplot(top5_states,
+          las = 2,
+          ylim = c(0, max(y_ticks)),
+          axes = FALSE,
+          col = ifelse(top5_states == max(top5_states), "firebrick", "gray80"),
+          main = type,
+          ylab = "Number of events")
+  axis(2, at = y_ticks, las = 1)
+}
 ```
 
-**Figure 2.** Number of places (the 50 states plus DC) where each event type was the most frequently recorded storm event in 2024. Thunderstorm Wind, highlighted in orange, was the most common event in 36 of the 51 places. After it, the count drops sharply. High Wind led in 4 places, Heavy Snow in 3, and Hail and Heat in 2 each, while Blizzard, Drought, High Surf, and Winter Weather each led in only 1. Each bar counts places, not events, so a tall bar means an event type was the top type in many states, not that it caused the most harm there.
+**Figure 2.** Number of events in the five states, out of the 50 states and DC, with the most events for each of the six most common storm event types in the U.S. in 2024. The figure has six bar graphs, one per event type, arranged in order from the most common type overall (Thunderstorm Wind) to the sixth most common (Winter Weather). Within each bar graph, the bars run from the state with the most events on the left to the fifth most on the right, and the leading state is highlighted in red. Each bar is one state's count, not the national total. Each bar graph also has its own y-axis scale, from 300 for Winter Weather to 2,000 for Hail, so compare the pattern within a bar graph, not the bar heights across bar graphs. Texas appears in five of the six bar graphs, more than any other state.
 
 **Answer:** Thunderstorm Wind was the most common event type in 36 of the 51 places (the 50 states and DC). The other 15 places most often recorded events that fit their local climate. In the West, High Wind led in California, Montana, Nevada, and Wyoming, and Heavy Snow led in Colorado, Washington, and Oregon. In the Southwest and the Plains, Heat led in Oklahoma and Arizona, Hail led in Texas and North Dakota, and Drought led in New Mexico. Alaska, Hawaii, and Vermont each had a top event of their own: Blizzard, High Surf, and Winter Weather.
+
+Looking at the same data by event type, Figure 2 shows that the most common event types are not distributed across the country in the same way. Some are concentrated in one or two states. Texas recorded 1,588 Hail events, about twice as many as Kansas (767) or Oklahoma (765), and Heat is even more localized, with Oklahoma (1,479) and Texas (1,164) each recording more than three times as many Heat events as Mississippi (358). Texas also led Flash Flood with 539 events, well ahead of North Carolina (367). Other event types cluster by region. Hail centers on the Plains, and High Wind on the West, led by California (583) and Montana (435). In two event types, the leading state is barely ahead of the next one. Kansas led Thunderstorm Wind with 1,043 events, only 22 more than New York (1,021), and all five of its top states fall between 971 and 1,043. In Winter Weather, New York (283) led Colorado (273) by only 10 events. Thunderstorm Wind occurs at similar levels in many states, which helps explain why it was the most common event type in 36 of the 51 places.
+
+Some states' top types come from thousands of events, while others come from only a handful. Hail in Texas comes from 1,588 events, but Thunderstorm Wind in DC and Rhode Island comes from only 11 events each. In Rhode Island, Heavy Snow and High Wind each had 9 events, so the top type there could easily change in another year.
 
 ### Question 3: Which event types are characteristic of which months?
 
@@ -352,29 +372,41 @@ round(nrow(top_types_data) / nrow(details) * 100, 1)
 
 **Code explanation:**
 
-1. Chunk options: `fig.width = 10, fig.height = 14` make the figure wide enough for every month label and tall enough for 5 rows of panels.
-2. 1st line: `par(mfrow = c(5, 2))` splits the figure into 5 rows and 2 columns, one spot per event type. `mar` sets smaller margins so each panel has more room.
+1. Chunk options: `fig.width = 10, fig.height = 14` make the figure wide enough for every month label and tall enough for 5 rows of bar graphs.
+2. 1st line: `par(mfrow = c(5, 2))` splits the figure into 5 rows and 2 columns, one spot per event type. `mar` sets small top, bottom, and right margins so each bar graph has more room, and a wider left margin so the y-axis numbers and label fit.
 3. 2nd line: the `for` loop repeats the steps inside `{ }` once for each event type in `top10_types`. Each time through, `type` holds the current event type.
 4. 3rd line: `top_types_data$EVENT_TYPE == type` gives TRUE for rows of the current type. Putting that inside `[ ]` keeps only those rows' months, saved as `type_months`.
-5. 4th line: `table(type_months)` counts how many events of the current type happened in each month. Because `MONTH_NAME` is a factor, all 12 months appear in calendar order, even months with no events. `barplot()` then creates a bar chart from those 12 counts.
-6. 5th line: `names.arg` labels the bars with each month's first letter so the labels fit.
-7. 6th line: `col` uses `ifelse()` to pick a color for each bar. The test `table(type_months) == max(table(type_months))` is TRUE only for the month with the most events. If the test is TRUE, `ifelse()` uses the first value, `"seagreen"`. Otherwise it uses the second, `"gray80"`. This highlights each panel's peak month in green.
-8. 7th line: `main = type` titles each panel with its event type.
+5. 4th line: `table(type_months)` counts how many events of the current type happened in each month. Because `MONTH_NAME` is a factor, all 12 months appear in calendar order, even months with no events. The counts are saved as `month_counts`, so the steps below can use them without counting again.
+6. 5th line: `pretty()` picks a set of round, evenly spaced numbers that cover the range from 0 to the tallest bar. The last number is always at or above the tallest bar. They're saved as `y_ticks`.
+7. 6th line: `barplot()` creates a bar chart from the 12 monthly counts.
+8. 7th line: `names.arg` labels the bars with each month's first letter so the labels fit.
+9. 8th line: `ylim` sets the y-axis to run from 0 to the largest number in `y_ticks`, so the axis always reaches past the tallest bar.
+10. 9th line: `axes = FALSE` stops `barplot()` from drawing its own y-axis, because its numbers can stop below the tallest bar.
+11. 10th line: `col` uses `ifelse()` to pick a color for each bar. The test `month_counts == max(month_counts)` is TRUE only for the month with the most events. If the test is TRUE, `ifelse()` uses the first value, `"seagreen"`. Otherwise it uses the second, `"gray80"`. This highlights each bar graph's peak month in green.
+12. 11th line: `main = type` titles each bar graph with its event type.
+13. 12th line: `ylab` labels the y-axis.
+14. 13th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 5th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
 
 ```{r q3-plot, fig.width=10, fig.height=14}
-par(mfrow = c(5, 2), mar = c(3, 3, 3, 1))
+par(mfrow = c(5, 2), mar = c(3, 5, 3, 1))
 for (type in top10_types) {
   type_months <- top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == type]
-  barplot(table(type_months),
+  month_counts <- table(type_months)
+  y_ticks <- pretty(c(0, max(month_counts)))
+  barplot(month_counts,
           names.arg = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"),
-          col = ifelse(table(type_months) == max(table(type_months)), "seagreen", "gray80"),
-          main = type)
+          ylim = c(0, max(y_ticks)),
+          axes = FALSE,
+          col = ifelse(month_counts == max(month_counts), "seagreen", "gray80"),
+          main = type,
+          ylab = "Number of events")
+  axis(2, at = y_ticks, las = 1)
 }
 ```
 
-**Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024, with each type's peak month highlighted in green. Each panel has its own y-axis scale, so compare the shape of each pattern, not the bar heights across panels. Three patterns stand out. Winter Weather, Heavy Snow, and High Wind are cold-season events that drop to almost nothing in summer. Thunderstorm Wind, Hail, Heat, Flash Flood, and Marine Thunderstorm Wind are warm-season events, and Heat is the most concentrated, with nearly all of its events in June through August. Flood and Drought happen all year, although Drought is most common in the fall.
+**Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024, with each type's peak month highlighted in green. Each bar graph has its own y-axis scale, so compare the shape of each pattern, not the bar heights across bar graphs. Three patterns stand out. Winter Weather, Heavy Snow, and High Wind are cold-season events that drop to almost nothing in summer. Thunderstorm Wind, Hail, Heat, Flash Flood, and Marine Thunderstorm Wind are warm-season events, and Heat is the most concentrated, with nearly all of its events in June through August. Flood and Drought happen all year, although Drought is most common in the fall.
 
-**Answer:** Most storm event types follow a clear seasonal pattern. Winter Weather, Heavy Snow, and High Wind peak in January and are rare in summer. Hail and Thunderstorm Wind peak in May, Heat peaks in July, and Flash Flood and Marine Thunderstorm Wind peak in August, all during the warm months. Drought peaks in November. Flood is the exception. It technically peaks in January, but it has similar counts in April, May, and June, so it has no single season.
+**Answer:** Most storm event types follow a clear seasonal pattern. Winter Weather, Heavy Snow, and High Wind peak in January and are rare in summer. Hail and Thunderstorm Wind peak in May, Heat peaks in July, and Flash Flood and Marine Thunderstorm Wind peak in August, all during the warm months. Drought peaks in November. Flood is the exception. It technically peaks in January (396 events), but June is close behind (358), so it has no single season.
 
 ### Question 4: Which event types cause the greatest economic damage?
 
@@ -394,7 +426,7 @@ This is my own question. Someone responsible for preparing for severe weather, s
 ```{r q4-table}
 damage_by_type <- details %>%
   group_by(EVENT_TYPE) %>%
-  summarize(events            = length(EVENT_ID),   # counts the events in each type, so "76 events" shows up
+  summarize(events            = length(EVENT_ID),   
             property_millions = sum(PROPERTY_DMG, na.rm = TRUE) / 1000000,
             crop_millions     = sum(CROP_DMG, na.rm = TRUE) / 1000000) %>%
   mutate(total_millions = property_millions + crop_millions) %>%

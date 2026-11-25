@@ -1,4 +1,4 @@
-## ----load-packages-------------------------------------
+## ----load-packages, message=FALSE----------------------
 library(dplyr)
 library(readr)
 
@@ -20,9 +20,9 @@ for (f in file_names) {
 
 
 ## ----load-data, cache=TRUE-----------------------------
-details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz")
-fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz")
-locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz")
+details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
+fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
+locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
 
 joined_data <- details %>%
   left_join(locations, by = "EVENT_ID") %>%
@@ -124,15 +124,22 @@ top_type_by_state <- state_type_counts %>%
 top_type_by_state
 
 
-## ----q2-plot, fig.width=9, fig.height=6----------------
-top_type_counts <- sort(table(as.character(top_type_by_state$EVENT_TYPE)), decreasing = TRUE)
-par(mar = c(9, 4, 3, 1))
-barplot(top_type_counts,
-        ylim = c(0, 40),
-        las = 2,
-        col = c("darkorange", rep("gray80", 8)),
-        main = "Most Common Storm Event Type in Each State, U.S. 2024",
-        ylab = "Number of states (including DC)")
+## ----q2-plot-types, fig.width=10, fig.height=12--------
+top6_types <- names(head(sort(table(details_states$EVENT_TYPE), decreasing = TRUE), 6))
+par(mfrow = c(3, 2), mar = c(9, 5, 3, 1))
+for (type in top6_types) {
+  type_states <- details_states$STATE[details_states$EVENT_TYPE == type]
+  top5_states <- head(sort(table(type_states), decreasing = TRUE), 5)
+  y_ticks <- pretty(c(0, max(top5_states)))
+  barplot(top5_states,
+          las = 2,
+          ylim = c(0, max(y_ticks)),
+          axes = FALSE,
+          col = ifelse(top5_states == max(top5_states), "firebrick", "gray80"),
+          main = type,
+          ylab = "Number of events")
+  axis(2, at = y_ticks, las = 1)
+}
 
 
 ## ----q3-table------------------------------------------
@@ -153,20 +160,26 @@ round(nrow(top_types_data) / nrow(details) * 100, 1)
 
 
 ## ----q3-plot, fig.width=10, fig.height=14--------------
-par(mfrow = c(5, 2), mar = c(3, 3, 3, 1))
+par(mfrow = c(5, 2), mar = c(3, 5, 3, 1))
 for (type in top10_types) {
   type_months <- top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == type]
-  barplot(table(type_months),
+  month_counts <- table(type_months)
+  y_ticks <- pretty(c(0, max(month_counts)))
+  barplot(month_counts,
           names.arg = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"),
-          col = ifelse(table(type_months) == max(table(type_months)), "seagreen", "gray80"),
-          main = type)
+          ylim = c(0, max(y_ticks)),
+          axes = FALSE,
+          col = ifelse(month_counts == max(month_counts), "seagreen", "gray80"),
+          main = type,
+          ylab = "Number of events")
+  axis(2, at = y_ticks, las = 1)
 }
 
 
 ## ----q4-table------------------------------------------
 damage_by_type <- details %>%
   group_by(EVENT_TYPE) %>%
-  summarize(events            = length(EVENT_ID),   # counts the events in each type, so "76 events" shows up
+  summarize(events            = length(EVENT_ID),   
             property_millions = sum(PROPERTY_DMG, na.rm = TRUE) / 1000000,
             crop_millions     = sum(CROP_DMG, na.rm = TRUE) / 1000000) %>%
   mutate(total_millions = property_millions + crop_millions) %>%
