@@ -1,6 +1,6 @@
 # Codebook
 
-This codebook describes the data, processing steps, and variables used in the report *Health Impact and Timing of Severe Weather Events in the U.S., 2024*. All processing happens in `FinalAnalysis.Rmd`, which starts from the raw files.
+This codebook describes the data, processing steps, and variables used in the report *Health Harm, Economic Damage, and Where and When Severe Weather Strikes in the U.S., 2024*. All processing happens in `FinalAnalysis.Rmd`, which starts from the raw files.
 
 ## Study design
 
@@ -26,24 +26,26 @@ In each file name, `d2024` is the data year and `c20261119` is the date NOAA cre
 
 The steps run in this order in `FinalAnalysis.Rmd`.
 
-1. **Load and join.** If any raw file is missing from the `data` folder, it is downloaded from NOAA with `download.file()`. The three raw files are read directly from the compressed `.csv.gz` files and joined by `EVENT_ID` with `left_join()`, keeping every row of the details file. The result, `joined_data`, is saved as `data/StormEvents_joined_data.csv`.
+1. **Load and join.** If any raw file is missing from the `data` folder, it is downloaded from NOAA with `download.file()`. The three raw files are read directly from the compressed `.csv.gz` files and joined by `EVENT_ID` with `left_join()`, keeping every row of the details file. The second join uses `relationship = "many-to-many"` because some events have several rows in both the joined table and the fatalities file. The result, `joined_data`, is saved as `data/StormEvents_joined_data.csv`.
 2. **Check the join.** One event can have several location rows and several fatality rows, so the join repeats events. `joined_data` has 85,745 rows for 69,802 events, and its total of direct deaths is 4,852 compared with 774 in the details file. For this reason, every count of events, deaths, injuries, and damage comes from the details table, which has exactly one row per event.
 3. **Order the months.** `MONTH_NAME` is converted from text to a factor with the months in calendar order.
-4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. Before combining, there are 3,171 Heat events and 2,660 Excessive Heat events, for 5,831 combined. This reduces the number of event types from 50 to 49. This choice affects Question 1: kept separate, each heat type has fewer deaths and injuries than tornadoes, but combined, heat ranks first.
+4. **Combine the heat categories.** Events recorded as "Excessive Heat" are relabeled "Heat," so heat's impact is not split across two categories. Before combining, there are 3,171 Heat events and 2,660 Excessive Heat events, for 5,831 combined. This reduces the number of event types from 50 to 49. This choice affects Question 1. The report prints each heat type's health total before combining (Heat 392, Excessive Heat 353, Tornado 711). Kept separate, each heat type has fewer deaths and injuries than tornadoes, but combined, heat ranks first.
 5. **Create a health total.** `HEALTH_TOTAL` adds direct deaths, indirect deaths, direct injuries, and indirect injuries for each event.
-6. **Convert damage to dollars.** The text damage values (such as "10.00K") are converted to numeric dollar amounts in `PROPERTY_DMG` and `CROP_DMG`.
-
+6. **Convert damage to dollars.** A check before conversion confirms the only unit letters are K, M, and B. Property damage has 54,232 K values, 520 M values, and 4 B values. Crop damage has 54,265 K values and 124 M values. The text damage values (such as "10.00K") are then converted to numeric dollar amounts in `PROPERTY_DMG` and `CROP_DMG`. The number of missing values is the same before and after conversion, so the conversion did not create any new missing values.
 
 ### Inclusion choices
 
 - **Year:** 2024 only.
-- **Question 2:** the 50 states and DC. Removed areas: American Samoa, Guam, Puerto Rico, Virgin Islands, Atlantic North, Atlantic South, E Pacific, Guam Waters, Gulf of Alaska, Gulf of Mexico, Lake Erie, Lake Huron, Lake Michigan, Lake Ontario, Lake St Clair, Lake Superior, and St Lawrence R. The table covers all 51 places. Figure 2 shows only the 6 most common event types in the 50 states and DC and, for each one, the 5 states with the most events.
+- **Question 2:** the 50 states and DC. The code keeps the 50 states (from R's built-in `state.name`) and DC, instead of listing places to remove, so a new marine zone in a later file version would still be left out. This removes 17 areas with 3,414 events: American Samoa, Guam, Puerto Rico, Virgin Islands, Atlantic North, Atlantic South, E Pacific, Guam Waters, Gulf of Alaska, Gulf of Mexico, Lake Erie, Lake Huron, Lake Michigan, Lake Ontario, Lake St Clair, Lake Superior, and St Lawrence R. That leaves 66,388 events. The table covers all 51 places. Figure 2 shows only the 6 most common event types in the 50 states and DC and, for each one, the 5 states with the most events.
 - **Question 3:** the 10 most common event types, which together make up about 82% of all events. Many other event types have very few events, some only one or two.
+- **Related event types:** Only Heat and Excessive Heat are combined. Flood and Flash Flood, and Hurricane (Typhoon) and Tropical Storm, keep NOAA's categories. The report checks whether combining either pair would change the results. Combined, the flood pair has 172 deaths and injuries and the hurricane pair has 192, so the top three in Question 1 would not change. In Question 4, the hurricane pair would still rank first (about $9.0 billion) and the flood pair second (about $3.9 billion).
 
 ### Missing values
 
 - The four death and injury columns have no missing values.
 - `DAMAGE_PROPERTY` is missing for 15,046 events and `DAMAGE_CROPS` for 15,413 events. These events stay `NA` after conversion and are left out of the damage totals with `na.rm = TRUE`. They are not set to 0, because NOAA records events with no damage as "0.00K," so a missing value means no estimate was reported, not that there was no damage. Damage totals therefore count only events with a reported estimate.
+- The `no_estimate` column in `damage_by_type` shows how many events of each type have no property damage estimate. For example, 26 of the 76 hurricane events have no estimate, so the hurricane total is likely low.
+- Heat's low damage total is not caused by missing estimates. Of its 5,831 events, 3,908 were recorded with $0 in property damage, and 1,921 have no estimate.
 
 ## Variables
 
@@ -86,10 +88,21 @@ These are added to the `details` table in `FinalAnalysis.Rmd`.
 | `damage_by_type` | Event type | Property, crop, and total damage by event type (Question 4). |
 | `state_type_counts` | State and event type pair | Number of events of each type in each state. Used to build `top_type_by_state` (Question 2). |
 | `top_types_data` | Event | The details table limited to the 10 most common event types. Used for Question 3. |
+| `pair_check` | Event type | Health and damage totals for Flood, Flash Flood, Tropical Storm, and Hurricane (Typhoon). Used to check that keeping NOAA's categories doesn't change the main rankings. |
+
+### Other values created
+
+| Name | Description |
+|---|---|
+| `keep_states` | The 50 state names in capital letters plus "DISTRICT OF COLUMBIA". Used to build `details_states`. |
+| `flood_months` | Flood's number of events in each month. Used in the Question 3 Answer. |
+| `heat_zero_damage` | Number of heat events recorded with $0 in property damage (3,908). Used in the Question 4 Answer. |
 
 ### Summary table columns
 
-**`health_by_type` (Question 1)**
+**`health_by_type` (Question 1, Tables 1 and 2)**
+
+The row names are the event types, so the report's text can pull single values, such as `health_by_type["Heat", "deaths"]`.
 
 | Column | Units | Description |
 |---|---|---|
@@ -98,15 +111,16 @@ These are added to the `details` table in `FinalAnalysis.Rmd`.
 | `injuries` | Count | Direct plus indirect injuries |
 | `health_total` | Count | Sum of `HEALTH_TOTAL` for the event type |
 
-**`top_type_by_state` (Question 2)**
+**`top_type_by_state` (Question 2, Table 3)**
 
 | Column | Units | Description |
 |---|---|---|
 | `STATE` | | State name, or "DISTRICT OF COLUMBIA" |
 | `EVENT_TYPE` | | Most common event type in that state |
 | `events` | Count | Number of events of that type in that state |
+| `percent` | Percent | Share of that state's events that belong to its most common type, rounded to one decimal place |
 
-**`peak_month_by_type` (Question 3)**
+**`peak_month_by_type` (Question 3, Table 4)**
 
 | Column | Units | Description |
 |---|---|---|
@@ -114,12 +128,23 @@ These are added to the `details` table in `FinalAnalysis.Rmd`.
 | `MONTH` | | Month with the most events of that type |
 | `events` | Count | Number of events of that type in that month |
 
-**`damage_by_type` (Question 4)**
+**`damage_by_type` (Question 4, Table 5)**
+
+The row names are the event types, the same as in `health_by_type`.
 
 | Column | Units | Description |
 |---|---|---|
 | `EVENT_TYPE` | | Event type |
 | `events` | Count | Number of events of that type |
+| `no_estimate` | Count | Number of events of that type with no property damage estimate |
 | `property_millions` | Millions of U.S. dollars | Total property damage, rounded to one decimal place |
 | `crop_millions` | Millions of U.S. dollars | Total crop damage, rounded to one decimal place |
 | `total_millions` | Millions of U.S. dollars | Property plus crop damage, added before rounding and then rounded to one decimal place |
+
+**`pair_check` (Table 6)**
+
+| Column | Units | Description |
+|---|---|---|
+| `event_type` | | Flood, Flash Flood, Tropical Storm, or Hurricane (Typhoon) |
+| `health_total` | Count | Deaths plus injuries, from `health_by_type` |
+| `damage_millions` | Millions of U.S. dollars | Total damage, from `damage_by_type` |
