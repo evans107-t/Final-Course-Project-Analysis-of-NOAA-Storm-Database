@@ -15,6 +15,8 @@
 #' 
 #' The data come from the U.S. National Oceanic and Atmospheric Administration (NOAA) Storm Events Database. This database tracks major storms and weather events in the United States, including when and where they happened and estimates of fatalities, injuries, and property damage. I used three raw files for 2024 (file version `c20261119`): the **details** file, the **fatalities** file, and the **locations** file. All three are linked by the `EVENT_ID` variable. The code loads the compressed `.csv.gz` files without unzipping them first, so no processing happened outside this document.
 #' 
+#' All code, the raw data files, a README, and a codebook are in the project's GitHub repository: https://github.com/evans107-t/Final-Course-Project-Analysis-of-NOAA-Storm-Database
+#' 
 #' ### Loading packages
 #' 
 #' **Code explanation:**
@@ -25,7 +27,7 @@
 #' 
 #' These are in their own chunk so they load every time the document is knit, even when the data chunk below is read from the cache.
 #' 
-## ----load-packages, message=FALSE----------------------
+## ----load-packages, message=FALSE--------------
 library(dplyr)
 library(readr)
 
@@ -43,7 +45,7 @@ library(readr)
 #' 5. 9th line: `!file.exists()` is TRUE when the file is not already in the `data` folder, so the download only runs for missing files.
 #' 6. 10th and 11th lines: `download.file()` downloads the file from its URL. `paste(..., sep = "")` joins the folder address and the file name with no space between them, which gives the full link. `destfile` sets where the file is saved. `mode = "wb"` writes the file in binary mode, which compressed `.gz` files need on Windows.
 #' 
-## ----download-data-------------------------------------
+## ----download-data-----------------------------
 if (!file.exists("data")) {
   dir.create("data")
 }
@@ -73,7 +75,7 @@ for (f in file_names) {
 #' 
 #' The file paths start at the `data` folder inside the project, not at a folder on one specific computer, so the analysis runs on any machine that has the project folder. `cache = TRUE` saves this chunk's result after the first knit, so later knits skip reloading the large details file.
 #' 
-## ----load-data, cache=TRUE-----------------------------
+## ----load-data, cache=TRUE---------------------
 details    <- read_csv("data/StormEvents_details-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
 fatalities <- read_csv("data/StormEvents_fatalities-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
 locations  <- read_csv("data/StormEvents_locations-ftp_v1.0_d2024_c20261119.csv.gz", show_col_types = FALSE)
@@ -97,7 +99,7 @@ write_csv(joined_data, "data/StormEvents_joined_data.csv")
 #' 4. 4th and 5th lines: `sum()` adds up `DEATHS_DIRECT` in each data set. `na.rm = TRUE` tells `sum()` to ignore missing values.
 #' 5. 7th line: `table()` counts how many rows each `EVENT_ID` has, and `max()` returns the largest count. A result of 1 means no event ID repeats, so `details` has exactly one row per event.
 #' 
-## ----join-check----------------------------------------
+## ----join-check--------------------------------
 data.frame(
   dataset       = c("details", "joined_data"),
   rows          = c(nrow(details), nrow(joined_data)),
@@ -119,7 +121,7 @@ max(table(details$EVENT_ID))
 #' 2. 2nd line: `mutate()` changes the existing `MONTH_NAME` column. `factor()` converts it into a factor, which is R's type for categorical variables.
 #' 3. 3rd and 4th lines: the `levels` argument sets the order of the categories, so the twelve months follow calendar order.
 #' 
-## ----clean-months--------------------------------------
+## ----clean-months------------------------------
 details <- details %>%
   mutate(MONTH_NAME = factor(MONTH_NAME,
                              levels = c("January", "February", "March", "April", "May", "June",
@@ -144,7 +146,7 @@ details <- details %>%
 #' 8. 9th line: `mutate()` changes the existing `EVENT_TYPE` column. `ifelse()` takes three arguments: a logical test (`EVENT_TYPE == "Excessive Heat"`), the value to use when the test is TRUE (`"Heat"`), and the value to use when it is FALSE (the original `EVENT_TYPE`).
 #' 9. 10th line: `length(table())` counts the event types again. It should be one fewer than before.
 #' 
-## ----combine-heat--------------------------------------
+## ----combine-heat------------------------------
 table(details$EVENT_TYPE)[c("Heat", "Excessive Heat")]
 length(table(details$EVENT_TYPE))
 
@@ -170,7 +172,7 @@ length(table(details$EVENT_TYPE))
 #' 1. 1st line: `details <-` saves the changes to `details`, and `%>%` passes `details` to the next step.
 #' 2. 2nd and 3rd lines: `mutate()` creates a new variable, `HEALTH_TOTAL`, by adding the four death and injury columns row by row. This gives one total per event.
 #' 
-## ----health-total--------------------------------------
+## ----health-total------------------------------
 details <- details %>%
   mutate(HEALTH_TOTAL = DEATHS_DIRECT + DEATHS_INDIRECT +
                         INJURIES_DIRECT + INJURIES_INDIRECT)
@@ -195,7 +197,7 @@ details <- details %>%
 #' 11. 15th line: `sum(is.na())` counts how many NAs are in `PROPERTY_DMG` after conversion, which is the number of events with no property damage estimate.
 #' 12. 16th line: does the same for `CROP_DMG`.
 #' 
-## ----convert-damage------------------------------------
+## ----convert-damage----------------------------
 table(gsub("[0-9.]", "", details$DAMAGE_PROPERTY))
 table(gsub("[0-9.]", "", details$DAMAGE_CROPS))
 sum(is.na(details$DAMAGE_PROPERTY))
@@ -231,7 +233,7 @@ sum(is.na(details$CROP_DMG))
 #' 5. 5th line: `table()` counts the events in each place left, and `length()` counts the entries. It should be 51.
 #' 6. 6th line: `details$STATE %in% keep_states` is TRUE for rows in the 50 states and DC, and `!` flips TRUE and FALSE, so it is TRUE for the removed areas. Putting that inside `[ ]` keeps only those rows' `STATE` values, and `table()` counts the events in each one. This lists the 17 removed areas and how many events each had.
 #' 
-## ----filter-states-------------------------------------
+## ----filter-states-----------------------------
 keep_states <- c(toupper(state.name), "DISTRICT OF COLUMBIA")
 
 details_states <- details %>%
@@ -259,7 +261,7 @@ table(details$STATE[!(details$STATE %in% keep_states)])
 #' 7. 9th to 11th lines: `knitr::kable()` prints the first 10 rows as a formatted table instead of raw console output. `knitr::` calls the function from the knitr package without loading the whole package. `row.names = FALSE` hides the row names, since the event type is already the first column. `col.names` gives the columns readable headings, and `caption` adds a title.
 #' 8. 12th to 14th lines: `arrange(desc(deaths))` sorts the event types by deaths alone, `head(..., 5)` keeps the top 5, and `kable()` prints them as a second table.
 #' 
-## ----q1-table------------------------------------------
+## ----q1-table----------------------------------
 health_by_type <- details %>%
   group_by(EVENT_TYPE) %>%
   summarize(deaths       = sum(DEATHS_DIRECT + DEATHS_INDIRECT),
@@ -294,7 +296,7 @@ knitr::kable(head(arrange(health_by_type, desc(deaths)), 5), row.names = FALSE,
 #' 12. 12th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side, `at = y_ticks` places the numbers at the round values from the 2nd line, and `las = 1` turns the numbers horizontal.
 #' 13. 13th and 14th lines: `legend()` adds a legend in the top right corner of the plot, and `legend =` sets the two labels. `fill` draws a box in each bar color next to its label, so the reader can tell deaths from injuries.
 #' 
-## ----q1-plot, fig.width=9, fig.height=6----------------
+## ----q1-plot, fig.width=9, fig.height=6--------
 top10 <- head(health_by_type, 10)
 y_ticks <- pretty(c(0, max(top10$health_total)))
 par(mar = c(10, 5, 3, 1))
@@ -331,7 +333,7 @@ legend("topright", legend = c("Deaths", "Injuries"),
 #' 8. 8th line: `as.data.frame()` turns the grouped result back into a plain data frame.
 #' 9. 9th to 12th lines: `knitr::kable()` prints all 51 rows as a formatted table instead of raw console output. `knitr::` calls the function from the knitr package without loading the whole package. `col.names` gives the columns readable headings, `format.args = list(big.mark = ",")` adds commas to large numbers, and `caption` adds a title.
 #' 
-## ----q2-table------------------------------------------
+## ----q2-table----------------------------------
 state_type_counts <- as.data.frame(table(details_states$STATE, details_states$EVENT_TYPE)) %>%
   rename(STATE = Var1, EVENT_TYPE = Var2, events = Freq)
 
@@ -365,8 +367,9 @@ knitr::kable(top_type_by_state,
 #' 13. 12th line: `main = type` titles each bar graph with its event type.
 #' 14. 13th line: `ylab` labels the y-axis.
 #' 15. 14th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 6th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
+#' 16. 16th line: `par(mfrow = c(1, 1))` resets the plotting area to one plot at a time, so the next figure isn't drawn inside this grid when the code runs as an R script.
 #' 
-## ----q2-plot-types, fig.width=10, fig.height=12--------
+## ----q2-plot-types, fig.width=10, fig.height=12----
 top6_types <- names(head(sort(table(details_states$EVENT_TYPE), decreasing = TRUE), 6))
 par(mfrow = c(3, 2), mar = c(9, 5, 3, 1))
 for (type in top6_types) {
@@ -382,6 +385,7 @@ for (type in top6_types) {
           ylab = "Number of events")
   axis(2, at = y_ticks, las = 1)
 }
+par(mfrow = c(1, 1))
 
 #' 
 #' **Figure 2.** Number of events in the five states, out of the 50 states and DC, with the most events for each of the six most common storm event types in the U.S. in 2024. The figure has six bar graphs, one per event type, arranged in order from the most common type overall (Thunderstorm Wind) to the sixth most common (Winter Weather). Within each bar graph, the bars run from the state with the most events on the left to the fifth most on the right, and the leading state is highlighted in blue. Each bar is one state's count, not the national total. Each bar graph also has its own y-axis scale, from 300 for Winter Weather to 2,000 for Hail, so compare the pattern within a bar graph, not the bar heights across bar graphs. Texas appears in five of the six bar graphs, more than any other state.
@@ -411,7 +415,7 @@ for (type in top6_types) {
 #' 9. 14th line: `nrow()` counts the rows in `top_types_data` and in `details`. Dividing the first by the second and multiplying by 100 gives the percent of all events that belong to the 10 most common types. `round(..., 1)` keeps one decimal place. R leaves off a decimal that ends in zero, so 82.0 prints as 82.
 #' 10. 15th line: `flood_months` stores Flood's number of events in each month. The Answer below uses it to report Flood's January and June counts straight from the data.
 #' 
-## ----q3-table------------------------------------------
+## ----q3-table----------------------------------
 top10_types <- names(head(sort(table(details$EVENT_TYPE), decreasing = TRUE), 10))
 
 top_types_data <- details %>%
@@ -448,8 +452,9 @@ flood_months <- table(top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == "Fl
 #' 12. 11th line: `main = type` titles each bar graph with its event type.
 #' 13. 12th line: `ylab` labels the y-axis.
 #' 14. 13th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 5th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
+#' 15. 15th line: `par(mfrow = c(1, 1))` resets the plotting area to one plot at a time, so the next figure isn't drawn inside this grid when the code runs as an R script.
 #' 
-## ----q3-plot, fig.width=10, fig.height=14--------------
+## ----q3-plot, fig.width=10, fig.height=14------
 par(mfrow = c(5, 2), mar = c(3, 5, 3, 1))
 for (type in top10_types) {
   type_months <- top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == type]
@@ -464,6 +469,7 @@ for (type in top10_types) {
           ylab = "Number of events")
   axis(2, at = y_ticks, las = 1)
 }
+par(mfrow = c(1, 1))
 
 #' 
 #' **Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024, with each type's peak month highlighted in blue. Each bar graph has its own y-axis scale, so compare the shape of each pattern, not the bar heights across bar graphs. Three patterns stand out. Winter Weather and Heavy Snow are cold-season events that drop to almost nothing in summer, and High Wind falls to its lowest point in July and August. Thunderstorm Wind, Hail, Heat, Flash Flood, and Marine Thunderstorm Wind are warm-season events, and Heat is the most concentrated, with nearly all of its events in June through August. Flood and Drought happen all year, although Drought is most common in the fall.
@@ -491,7 +497,7 @@ for (type in top10_types) {
 #' 13. 20th line: `details$EVENT_TYPE == "Heat" & details$PROPERTY_DMG == 0` is TRUE for heat events recorded with $0 in property damage. `&` requires both conditions to be TRUE. `sum()` counts them, and `na.rm = TRUE` skips events with no estimate. The count is saved as `heat_zero_damage`.
 #' 14. 21st line: prints `heat_zero_damage`.
 #' 
-## ----q4-table------------------------------------------
+## ----q4-table----------------------------------
 damage_by_type <- details %>%
   group_by(EVENT_TYPE) %>%
   summarize(events            = length(EVENT_ID),
@@ -531,7 +537,7 @@ heat_zero_damage
 #' 11. 10th and 11th lines: `main` adds the title, and `ylab` labels the y-axis.
 #' 12. 12th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side, `at = y_ticks` places the numbers at the round values from the 2nd line, and `las = 1` turns the numbers horizontal.
 #' 
-## ----q4-plot, fig.width=9, fig.height=6----------------
+## ----q4-plot, fig.width=9, fig.height=6--------
 top10_damage <- head(damage_by_type, 10)
 y_ticks <- pretty(c(0, max(top10_damage$total_millions)))
 par(mar = c(10, 5, 3, 1))
@@ -563,7 +569,7 @@ axis(2, at = y_ticks, las = 1)
 #' 5. 9th line: `[3:4]` does the same for Tropical Storm and Hurricane (Typhoon).
 #' 6. 10th and 11th lines: add up the damage totals for each pair the same way.
 #' 
-## ----pair-check----------------------------------------
+## ----pair-check--------------------------------
 pairs <- c("Flood", "Flash Flood", "Tropical Storm", "Hurricane (Typhoon)")
 pair_check <- data.frame(event_type      = pairs,
                          health_total    = health_by_type[pairs, "health_total"],
@@ -593,7 +599,7 @@ sum(pair_check$damage_millions[3:4])
 #' 
 #' 1. 1st line: `sessionInfo()` records the details of the active R session automatically, instead of them being written down by hand. It prints the R version, the operating system, and the version of every package loaded in the current session.
 #' 
-## ----session-info--------------------------------------
+## ----session-info------------------------------
 sessionInfo()
 
 #' 

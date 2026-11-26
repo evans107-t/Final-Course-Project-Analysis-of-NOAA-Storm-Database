@@ -15,6 +15,8 @@ This report uses NOAA's Storm Events Database to find which severe weather event
 
 The data come from the U.S. National Oceanic and Atmospheric Administration (NOAA) Storm Events Database. This database tracks major storms and weather events in the United States, including when and where they happened and estimates of fatalities, injuries, and property damage. I used three raw files for 2024 (file version `c20261119`): the **details** file, the **fatalities** file, and the **locations** file. All three are linked by the `EVENT_ID` variable. The code loads the compressed `.csv.gz` files without unzipping them first, so no processing happened outside this document.
 
+All code, the raw data files, a README, and a codebook are in the project's GitHub repository: https://github.com/evans107-t/Final-Course-Project-Analysis-of-NOAA-Storm-Database
+
 ### Loading packages
 
 **Code explanation:**
@@ -365,6 +367,7 @@ knitr::kable(top_type_by_state,
 13. 12th line: `main = type` titles each bar graph with its event type.
 14. 13th line: `ylab` labels the y-axis.
 15. 14th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 6th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
+16. 16th line: `par(mfrow = c(1, 1))` resets the plotting area to one plot at a time, so the next figure isn't drawn inside this grid when the code runs as an R script.
 
 ```{r q2-plot-types, fig.width=10, fig.height=12}
 top6_types <- names(head(sort(table(details_states$EVENT_TYPE), decreasing = TRUE), 6))
@@ -382,6 +385,7 @@ for (type in top6_types) {
           ylab = "Number of events")
   axis(2, at = y_ticks, las = 1)
 }
+par(mfrow = c(1, 1))
 ```
 
 **Figure 2.** Number of events in the five states, out of the 50 states and DC, with the most events for each of the six most common storm event types in the U.S. in 2024. The figure has six bar graphs, one per event type, arranged in order from the most common type overall (Thunderstorm Wind) to the sixth most common (Winter Weather). Within each bar graph, the bars run from the state with the most events on the left to the fifth most on the right, and the leading state is highlighted in blue. Each bar is one state's count, not the national total. Each bar graph also has its own y-axis scale, from 300 for Winter Weather to 2,000 for Hail, so compare the pattern within a bar graph, not the bar heights across bar graphs. Texas appears in five of the six bar graphs, more than any other state.
@@ -448,6 +452,7 @@ flood_months <- table(top_types_data$MONTH_NAME[top_types_data$EVENT_TYPE == "Fl
 12. 11th line: `main = type` titles each bar graph with its event type.
 13. 12th line: `ylab` labels the y-axis.
 14. 13th line: `axis(2, ...)` adds the y-axis back as a separate step. `2` means the left side of the plot, and `at = y_ticks` places the numbers at the round values from the 5th line. `las = 1` turns the numbers horizontal so all of them print, including the top one.
+15. 15th line: `par(mfrow = c(1, 1))` resets the plotting area to one plot at a time, so the next figure isn't drawn inside this grid when the code runs as an R script.
 
 ```{r q3-plot, fig.width=10, fig.height=14}
 par(mfrow = c(5, 2), mar = c(3, 5, 3, 1))
@@ -464,6 +469,7 @@ for (type in top10_types) {
           ylab = "Number of events")
   axis(2, at = y_ticks, las = 1)
 }
+par(mfrow = c(1, 1))
 ```
 
 **Figure 3.** Number of events per month (January through December) for the 10 most common storm event types in the U.S. in 2024, with each type's peak month highlighted in blue. Each bar graph has its own y-axis scale, so compare the shape of each pattern, not the bar heights across bar graphs. Three patterns stand out. Winter Weather and Heavy Snow are cold-season events that drop to almost nothing in summer, and High Wind falls to its lowest point in July and August. Thunderstorm Wind, Hail, Heat, Flash Flood, and Marine Thunderstorm Wind are warm-season events, and Heat is the most concentrated, with nearly all of its events in June through August. Flood and Drought happen all year, although Drought is most common in the fall.
