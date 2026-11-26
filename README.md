@@ -38,7 +38,7 @@ Files downloaded on November 23, 2026.
 | `README.md` | This file |
 | `CodeBook.md` | Study design, processing steps, and variable definitions |
 | `FinalAnalysis.html` | Knitted report, the same version published on RPubs |
-| `Final Course Project: Analysis of NOAA Storm Database.Rproj` | RStudio project file that sets the working directory |
+| `NOAA-Storm-Analysis.Rproj` | RStudio project file that sets the working directory |
 
 ## Software
 
@@ -54,7 +54,7 @@ The full session information is at the end of the published report.
 ## How to reproduce
 
 1. Clone or download this repository.
-2. Open `Final Course Project: Analysis of NOAA Storm Database.Rproj` in RStudio.
+2. Open `NOAA-Storm-Analysis.Rproj` in RStudio.
 3. Install the required packages if needed: `install.packages(c("dplyr", "readr", "knitr", "rmarkdown"))`.
 4. Open `FinalAnalysis.Rmd` and click **Knit**.
 5. To run `FinalAnalysis.R` instead of knitting, maximize the Plots pane first. Figures 2 and 3 are large panel plots and fail with "figure margins too large" in a small pane.
